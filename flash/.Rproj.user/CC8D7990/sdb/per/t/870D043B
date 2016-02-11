@@ -1,0 +1,17 @@
+{
+    "contents" : "library(\"gtools\")\nlibrary(\"MASS\")\nlibrary(\"PMA\")\nlibrary(\"ashr\")\nsource('~/HG/ash-sfa/Rcode/postmean/flash/flash_VEM.R')\nsource('~/HG/ash-sfa/Rcode/postmean/flash/backfitting.R')\nsource('~/HG/ash-sfa/Rcode/postmean/flash/flash_v_K.R')\nsim_K = function(K, N, P, SF, SL, signal,noise){\n  E = matrix(rnorm(N*P,0,noise),nrow=N)\n  Y = E\n  L_true = array(0, dim = c(N,K))\n  F_true = array(0, dim = c(P,K))\n  \n  for(k in 1:K){\n    lstart = rnorm(N, 0, signal)\n    fstart = rnorm(P, 0, signal)\n    \n    index = sample(seq(1:N),(N*SL))\n    lstart[index] = 0\n    index = sample(seq(1:P),(P*SF))\n    fstart[index] = 0\n    \n    L_true[,k] = lstart\n    F_true[,k] = fstart\n    \n    Y = Y + lstart %*% t(fstart)\n  }\n  return(list(Y = Y, L_true = L_true, F_true = F_true, Error = E))\n}\n\n# this file is test the matrix angle and \ndata = sim_K(K=1,N=200, P=1000, SF = 0.01, SL = 0.1, signal = 1,noise = 1)\nY = data$Y\nL_true = data$L_true\nF_true = data$F_true\nE = data$Error\nY1 = Y[1:100,]\nY2 = Y[101:200,]\nsvdl1 = svd(Y1)$v\nsvdl2 = svd(Y2)$v\n\nmatrixangle = function(X1,X2){\n  P1 = X1%*%solve(t(X1)%*%X1)%*%t(X1)\n  P2 = X2%*%solve(t(X2)%*%X2)%*%t(X2)\n  return(norm((P1-P2),\"2\"))\n}\n\nmatrixangle(svdl1,svdl2)\n\n\nggreedy = flash_v_K(Y1,K=30)\n# initial gl and gf as svd\ngl1 = ggreedy$l\ngf1 = ggreedy$f\n#sqrt(mean(((Y  - gl%*%t(gf) )- E)^2))\ngback = backfitting(Y1,gl1,gf1,tautol = 10)\ngbl1 = gback$Lest\ngbf1 = gback$Fest\n\nggreedy = flash_v_K(Y2,K=30)\n# initial gl and gf as svd\ngl2 = ggreedy$l\ngf2 = ggreedy$f\n#sqrt(mean(((Y  - gl%*%t(gf) )- E)^2))\ngback = backfitting(Y2,gl2,gf2)\ngbl2 = gback$Lest\ngbf2 = gback$Fest\nmatrixangle(gbf1,gbf2)\nmatrixangle(gf1,gf2)\n\n\ndata = sim_K(K=10,N=200, P=1000, SF = 0.95, SL = 0.8, signal = 1.5,noise = 1)\nY = data$Y\nL_true = data$L_true\nF_true = data$F_true\nE = data$Error\nsvdl = svd(Y)$u\nsvdf = svd(Y)$v\nsvdd = svd(Y)$d\nplot(svdd)\nsvdK = 10\nsqrt(mean(((Y  - svdl[,1:svdK]%*% diag(svdd[1:svdK]) %*% t(svdf[,1:svdK]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))\n#sqrt(mean(((Y  - svdd[1] * svdl[,1] %*%  t(svdf[,1]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))\nggreedy = flash_v_K(Y,K=20)\n# initial gl and gf as svd\ngl = ggreedy$l\ngf = ggreedy$f\ndim(gl)\nsqrt(mean(((Y  - gl%*%t(gf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))\n# proportion in \neigenvalue = rep(0,dim(gl)[2])\nfor(i in 1:length(eigenvalue)){\n  eigenvalue[i] = (sqrt(mean((gl[,i]%*%t(gf[,i]))^2)))\n}\neigenvalue = eigenvalue / sqrt(mean(Y^2))\nplot(svdd/sum(svdd))\nplot(eigenvalue)\n\n\ngback = backfitting(Y,gl,gf,tautol = 100, numtau = 5)\ngbl = gback$Lest\ngbf = gback$Fest\ndim(gbl)\nsqrt(mean(((Y  - gbl%*%t(gbf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))\nfor(i in 2:10){\n  lambda = i/10 \n  out = PMD(Y, type=\"standard\", K=10, sumabs=lambda)\n  print(sqrt(mean(((Y  - out$u%*% diag(out$d) %*% t(out$v) )- E)^2))/ sqrt(mean(((Y - 0)- E)^2)))\n}\n\n",
+    "created" : 1455155729527.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1220753375",
+    "id" : "870D043B",
+    "lastKnownWriteTime" : 1455058674,
+    "path" : "~/HG/ash-sfa/Rcode/postmean/flash/simulation/matrixangle.R",
+    "project_path" : null,
+    "properties" : {
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

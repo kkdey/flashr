@@ -1,0 +1,13 @@
+Package: flash
+Type: Package
+Title: Title Case
+Version: 0.1
+Date: 2016-02-10
+Author: Wei Wang <yourfault@somewhere.net>
+Maintainer: Wei Wang <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: GPL
+LazyData: TRUE
+Imports: ashr
+RoxygenNote: 5.0.1
+VignetteBuilder: knitr

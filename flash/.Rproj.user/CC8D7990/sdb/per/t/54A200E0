@@ -1,0 +1,17 @@
+{
+    "contents" : "#' Factor Loading Adaptive Shrinkage (K factors version)\n#'\n#' flash provide rank K matrix decomposition with greedy algorithm\n#'\n#' @param Y is the data matrix (N by P)\n#' @param K is the max number of factor user want. the output will provide the actual number of factor\n#'   automaticaly.\n#'\n#' @details greedy algorithm on the residual matrix to get a rank one matrix decomposition\n#'\n#' @export greedy\n#'\n#' @importFrom ashr ash\n#'\n#' @return list of factor, loading and variance of noise matrix\n#'  \\itemize{\n#'   \\item{\\code{l}} {is a K by N matrix for loadings}\n#'   \\item{\\code{f}} {is a K by P matrix for factors}\n#'  }\n#' @examples\n#' N = 100\n#' P = 200\n#' Y = matrix(rnorm(N*P,0,1),ncol=P)\n#' g = greedy(Y,10)\n#'\n\ngreedy = function(Y,K){\n  N = dim(Y)[1]\n  P = dim(Y)[2]\n  #initial the residual for the greedy algorithm\n  residual = Y\n  # do rank one decomposition\n  r_flash = flash(residual)\n  l_temp = r_flash$l\n  f_temp = r_flash$f\n  # test whether it is zero\n  if(sum(l_temp^2)==0 | sum(f_temp^2)==0){\n    L_out = 0\n    F_out = 0\n    return(list(l = L_out,f = F_out))\n  }else{\n    L_out = l_temp\n    F_out = f_temp\n    #get the new residual\n    residual = residual - l_temp %*% t(f_temp)\n    #itreation for the rank K-1\n    for(k in 1:K){\n      #rank one for residual\n      r_flash = flash(residual)\n      l_temp = r_flash$l\n      f_temp = r_flash$f\n      # get the new residual\n      residual = residual - l_temp %*% t(f_temp)\n      #check if we should stop at this iteration\n      if(sum(l_temp^2)==0 | sum(f_temp^2)==0){\n        break\n      }else{\n        # if not go to next step and restore the l and f\n        L_out = cbind(L_out,l_temp)\n        F_out = cbind(F_out,f_temp)\n      }\n      # for loop can control the number of the factors if needed\n    }\n    return(list(l = L_out,f = F_out))\n  }\n  # no return here, since return before\n}\n",
+    "created" : 1455153523681.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2276065694",
+    "id" : "54A200E0",
+    "lastKnownWriteTime" : 1455155977,
+    "path" : "~/HG/ash-sfa/Rcode/postmean/flash/flash/R/flash_v_K.R",
+    "project_path" : "R/flash_v_K.R",
+    "properties" : {
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_source"
+}

@@ -1,0 +1,13 @@
+Package: flash
+Type: Package
+Title: Title Case
+Version: 0.1
+Date: 2016-02-10
+Author: Wei Wang <yourfault@somewhere.net>
+Maintainer: Wei Wang <yourfault@somewhere.net>
+Description: More about what it does (maybe more than one line)
+License: GPL
+LazyData: TRUE
+NeedsCompilation: no
+Packaged: 2016-02-10 15:36:08 UTC; weiwang
+Built: R 3.2.0; ; 2016-02-10 15:36:19 UTC; unix
