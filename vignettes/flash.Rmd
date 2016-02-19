@@ -2,20 +2,20 @@
 title: "flash"
 author: "Wei Wang <<weidong@uchicago.edu>>,  Matthew Stephens <<mstephens@uchicago.edu>> "
 date: "`r Sys.Date()`"
-# bibliography: flash.bib
+# bibliography: flashr.bib
 output:
   rmarkdown::html_vignette:
     toc: true
     number_sections: true
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{flash}
+  %\VignetteIndexEntry{flashr}
 ---
 
 One example for flash and how to use greedy and backfitting. For the speed, I just use backfitting with few runs of flash in each iteration. I also compare with PMD, these are all better than PMD.
 
 ```{r}
-library("flash")
+library("flashr")
 sim_K = function(K, N, P, SF, SL, signal,noise){
   E = matrix(rnorm(N*P,0,noise),nrow=N)
   Y = E
@@ -106,7 +106,7 @@ sim_hd = function(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0){
   
   return(list(Y = Y, L_true = lstart, F_true = fstart, Error = E,sig2_true = sig2_true))
 }
-library("flash")
+library("flashr")
 N = 100
 P = 200
 SF = 0.5
