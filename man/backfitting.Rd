@@ -4,7 +4,7 @@
 \alias{backfitting}
 \title{backfitting for correction K factors model}
 \usage{
-backfitting(Y, Lest, Fest, tautol = 100, numtau = 500)
+backfitting(Y, Lest, Fest, maxiter_bf = 100, maxiter_r1 = 500)
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
@@ -34,7 +34,10 @@ greedy algorithm on the residual matrix to get a rank one matrix decomposition
 N = 100
 P = 200
 Y = matrix(rnorm(N*P,0,1),ncol=P)
-g = flash_v_K(Y,10)
+L = matrix(rnorm(N*2,0,1),ncol=2)
+F = matrix(rnorm(P*2,0,1),ncol=2)
+g = greedy(Y,K = 10)
+gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 
 }
 

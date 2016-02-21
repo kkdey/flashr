@@ -14,7 +14,7 @@ vignette: >
 
 One example for flash and how to use greedy and backfitting. For the speed, I just use backfitting with few runs of flash in each iteration. I also compare with PMD, these are all better than PMD.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 library("flashr")
 sim_K = function(K, N, P, SF, SL, signal,noise){
   E = matrix(rnorm(N*P,0,noise),nrow=N)
@@ -66,7 +66,7 @@ eigenvalue = eigenvalue / sqrt(mean(Y^2))
 plot(eigenvalue)
 
 
-gback = backfitting(Y,gl,gf,tautol = 100, numtau = 5)
+gback = backfitting(Y,gl,gf,tautol = 100, maxiter_r1 = 10)
 gbl = gback$l
 gbf = gback$f
 dim(gbl)
@@ -80,7 +80,7 @@ If we know the variance, we can do better based on our model.
 
 we can see that if we known the variance matrix, we can do better than using flash with constant variance. I have also compared those with PMD, and the result is flash_hd better then flash which is better then PMD.
 
-```{r}
+```{r,message=FALSE,warning=FALSE}
 sim_hd = function(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0){
 
   E = matrix(rep(0,N*P),nrow=N)
@@ -124,7 +124,7 @@ ghd = flash_hd(Y,partype = "constant")
 l = ghd$l
 f = ghd$f
 sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
-gvem = flash(Y)
+gvem = flash_r1(Y)
 l = gvem$l
 f = gvem$f
 sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))

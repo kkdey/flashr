@@ -58,9 +58,9 @@ ATM_l = function(Y,Ef,Ef2,sigmae2){
 #' @param tol which is the stop criterion for the convergence, default is 1e-5
 #' @param numtau number of iteration, default is 500. for the backfitting case, the number of tau should be 5 or 10.
 #'
-#' @details flash privide rank one matrix decomposition with variational EM algorithm.
+#' @details flash_r1 privide rank one matrix decomposition with variational EM algorithm.
 #'
-#' @export flash
+#' @export flash_r1
 #'
 #' @importFrom ashr ash
 #'
@@ -74,12 +74,12 @@ ATM_l = function(Y,Ef,Ef2,sigmae2){
 #' N = 100
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = flash(Y)
+#' g = flash_r1(Y)
 #'
 
 
 # set the number of iteration as numtau
-flash = function(Y,tol=1e-6,numtau = 500){
+flash_r1 = function(Y, tol=1e-6, maxiter_r1 = 500){
   #dealing with missing value
   Y[is.na(Y)] = 0
   # get initial value for l and f and sigmae
@@ -103,7 +103,7 @@ flash = function(Y,tol=1e-6,numtau = 500){
 
   epsilon = 1
   tau = 1
-  while(epsilon >= tol & tau < numtau ){
+  while(epsilon >= tol & tau < maxiter_r1 ){
     tau = tau + 1
     pre_sigmae2 = sigmae2_v
 
@@ -113,8 +113,8 @@ flash = function(Y,tol=1e-6,numtau = 500){
     Ef = par_f$Ef
     Ef2 = par_f$Ef2
     if(sum(Ef^2)==0){
-      l = 0
-      f = 0
+      El = rep(0,length(El))
+      Ef = rep(0,length(Ef))
       break
     }
     sigmae2_v = mean( Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2)) )
@@ -123,8 +123,8 @@ flash = function(Y,tol=1e-6,numtau = 500){
     El = par_l$El
     El2 = par_l$El2
     if(sum(El^2)==0){
-      l = 0
-      f = 0
+      El = rep(0,length(El))
+      Ef = rep(0,length(Ef))
       break
     }
     epsilon = abs(pre_sigmae2 - sigmae2_v )

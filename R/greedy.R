@@ -30,7 +30,7 @@ greedy = function(Y,K){
   #initial the residual for the greedy algorithm
   residual = Y
   # do rank one decomposition
-  r_flash = flash(residual)
+  r_flash = flash_r1(residual)
   l_temp = r_flash$l
   f_temp = r_flash$f
   # test whether it is zero
@@ -44,9 +44,9 @@ greedy = function(Y,K){
     #get the new residual
     residual = residual - l_temp %*% t(f_temp)
     #itreation for the rank K-1
-    for(k in 1:K){
+    for(k in 2:K){
       #rank one for residual
-      r_flash = flash(residual)
+      r_flash = flash_r1(residual)
       l_temp = r_flash$l
       f_temp = r_flash$f
       # get the new residual

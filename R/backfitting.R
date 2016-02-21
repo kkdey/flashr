@@ -23,22 +23,25 @@
 #' N = 100
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = flash_v_K(Y,10)
+#' L = matrix(rnorm(N*2,0,1),ncol=2)
+#' F = matrix(rnorm(P*2,0,1),ncol=2)
+#' g = greedy(Y,K = 10)
+#' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
 
 # tautol is the number of iterations here
-backfitting = function(Y,Lest,Fest,tautol=100,numtau = 500){
+backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500){
   # backfitting with initial values
   epsilon = 1
   tau = 1
-  while(epsilon>1e-5 & tau < tautol){
+  while(epsilon>1e-5 & tau < maxiter_bf){
     tau = tau + 1
     # if the l or f is a vector
     if(is.vector(Lest) || is.vector(Fest)){
       residual = Y - Lest %*% t(Fest)
       preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
       residual = residual + Lest %*% t(Fest)
-      r_flash = flash(residual,numtau = numtau)
+      r_flash = flash_r1(residual,maxiter_r1 = maxiter_r1)
       Lest = r_flash$l
       Fest = r_flash$f
       residual = residual - Lest %*% t(Fest)
@@ -49,7 +52,7 @@ backfitting = function(Y,Lest,Fest,tautol=100,numtau = 500){
       preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
       for(i in 1:K){
         residual = residual + Lest[,i] %*% t(Fest[,i])
-        r_flash = flash(residual,numtau = numtau)
+        r_flash = flash_r1(residual,maxiter_r1 = maxiter_r1)
         Lest[,i] = r_flash$l
         Fest[,i] = r_flash$f
         residual = residual - Lest[,i] %*% t(Fest[,i])
