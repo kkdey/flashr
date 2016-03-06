@@ -13,5 +13,6 @@ test_that("backfitting works when results goes to 0", {
   l = rnorm(10)
   f=rnorm(5)
   Y = matrix(rnorm(10*5),nrow=10)
-  expect_silent(temp=backfitting(Y,l,f))
+  temp = backfitting(Y,l,f)
+  expect_equal(temp$l,matrix(0,nrow=10,ncol=0))
 })

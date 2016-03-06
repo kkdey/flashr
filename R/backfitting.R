@@ -50,19 +50,19 @@ backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500){
       residual = residual - Lest[,i] %*% t(Fest[,i])
     }
     # remove the zero in the l and f
-    while(i <= dim(Lest)[2] ){
-      if(all(Lest[,i]==0) || all(Fest[,i]==0)){
-        Lest = Lest[,-i,drop=FALSE]
-        Fest = Fest[,-i,drop=FALSE]
-      }
-      numfactor = dim(Lest)[2]
-      if(numfactor == 1 || numfactor==0){
-        break
-      }
-      i = i+1
-    }
+    zeros = is_zero_factor(Lest) || is_zero_factor(Fest)
+    Lest = Lest[,!zeros,drop=FALSE]
+    Fest = Fest[,!zeros,drop=FALSE]
     RMSfl = sqrt(mean((Lest %*% t(Fest))^2))
     epsilon = abs(preRMSfl - RMSfl)
   }
   return(list(l = Lest, f = Fest))
+}
+
+# returns whether a vector is all 0
+allzeros = function(x){return (all(x==0))}
+
+#returns vector of TRUE and FALSE for which factors (columns) of l are all 0
+is_zero_factor=function(l){
+  apply(l,2,allzeros)
 }
