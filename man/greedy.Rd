@@ -15,8 +15,8 @@ automaticaly.}
 \value{
 list of factor, loading and variance of noise matrix
  \itemize{
-  \item{\code{l}} {is a K by N matrix for loadings}
-  \item{\code{f}} {is a K by P matrix for factors}
+  \item{\code{l}} {is a N by K matrix for loadings}
+  \item{\code{f}} {is a P by K matrix for factors}
  }
 }
 \description{
