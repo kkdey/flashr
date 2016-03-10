@@ -3,5 +3,6 @@
 export(backfitting)
 export(flash_hd)
 export(flash_r1)
+export(flash_r1c)
 export(greedy)
 importFrom(ashr,ash)

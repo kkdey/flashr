@@ -5,6 +5,7 @@
 #' @param Y is the data matrix (N by P)
 #' @param K is the max number of factor user want. the output will provide the actual number of factor
 #'   automaticaly.
+#' @param r1_type is the flag to choose the constant variance for columns or not, defulat is constant
 #'
 #' @details greedy algorithm on the residual matrix to get a rank one matrix decomposition
 #'
@@ -24,13 +25,17 @@
 #' g = greedy(Y,10)
 #'
 
-greedy = function(Y,K){
+greedy = function(Y,K,r1_type = "constant"){
   N = dim(Y)[1]
   P = dim(Y)[2]
   #initial the residual for the greedy algorithm
   residual = Y
   # do rank one decomposition
-  r_flash = flash_r1(residual)
+  if(r1_type == "nonconstant"){
+    r_flash = flash_r1c(residual)
+  }else{
+    r_flash = flash_r1(residual)
+  }
   l_temp = r_flash$l
   f_temp = r_flash$f
   # test whether it is zero
@@ -46,7 +51,11 @@ greedy = function(Y,K){
     #itreation for the rank K-1
     for(k in 2:K){
       #rank one for residual
-      r_flash = flash_r1(residual)
+      if(r1_type == "nonconstant"){
+        r_flash = flash_r1c(residual)
+      }else{
+        r_flash = flash_r1(residual)
+      }
       l_temp = r_flash$l
       f_temp = r_flash$f
       # get the new residual

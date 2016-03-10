@@ -117,10 +117,47 @@ sigmaest = function(residualsqr){
 #'   \item{\code{sigmae2}} {is mean of sigma square which is estimation for the noise variance}
 #'  }
 #' @examples
-#' N = 100
-#' P = 200
-#' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = flash_VEM(Y)
+#' sim_hd = function(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0){
+#' E = matrix(rep(0,N*P),nrow=N)
+#' sig2_true = matrix(rep(0,N*P),nrow=N)
+#' for(i in 1:N){
+#'   for(j in 1:P){
+#'     sig2_true[i,j] = mu + a[i] + b[j]
+#'     E[i,j] = rnorm(1,0,sqrt(mu + a[i] + b[j]))
+#'   }
+#' }
+#'
+#' K=1
+#' lstart = rnorm(N, 0, signal)
+#'
+#' fstart = rnorm(P, 0, signal)
+#'
+#' index = sample(seq(1:N),(N*SL))
+#' lstart[index] = 0
+#' index = sample(seq(1:P),(P*SF))
+#' fstart[index] = 0
+#'
+#' Y = lstart %*% t(fstart) + E
+#'
+#' return(list(Y = Y, L_true = lstart, F_true = fstart, Error = E,sig2_true = sig2_true))
+#' }
+#' N = 200
+#' P = 500
+#' SF = 0.5
+#' SL = 0.5
+#' signal = 1
+#' data = sim_hd(N, P, SF, SL, signal, a = rchisq(N,1),b = rchisq(P,2),mu = 0)
+#' sigmae2_true = data$sig2_true
+#' Y = data$Y
+#' E = data$Error
+#' gc = flash_hd(Y,tol = 1e-04,maxiter_r1 = 300)
+#' f = gc$f
+#' l = gc$l
+#' sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
+#' gc = flash_r1(Y,tol = 1e-04,maxiter_r1 = 300)
+#' f = gc$f
+#' l = gc$l
+#' sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
 #'
 flash_hd = function(Y, tol=1e-5, numtau = 500, partype = "constant", sigmae2 = 1){
   N = dim(Y)[1]

@@ -7,6 +7,7 @@
 #' @param Fest is estimate for f to correct
 #' @param maxiter_bf maximum number of iterations
 #' @param maxiter_r1 maximum number of iterations in flash rank one.
+#' @param r1_type is the flag to choose the constant variance for columns or not, defulat is constant
 #'
 #' @details Repeatedly applies rank 1 algorithm to Y-L[,-i]F[,-i]'
 #'
@@ -26,7 +27,7 @@
 #' g = greedy(Y,K = 10)
 #' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
-backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500){
+backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500,r1_type ="constant"){
   # backfitting with initial values
   epsilon = 1
   tau = 1
@@ -44,7 +45,11 @@ backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500){
     preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
     for(i in 1:K){
       residual = residual + Lest[,i] %*% t(Fest[,i])
-      r_flash = flash_r1(residual,maxiter_r1 = maxiter_r1)
+      if(r1_type == "nonconstant"){
+        r_flash = flash_r1c(residual,maxiter_r1 = maxiter_r1)
+      }else{
+        r_flash = flash_r1(residual,maxiter_r1 = maxiter_r1)
+      }
       Lest[,i] = r_flash$l
       Fest[,i] = r_flash$f
       residual = residual - Lest[,i] %*% t(Fest[,i])

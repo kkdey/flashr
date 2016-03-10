@@ -4,13 +4,15 @@
 \alias{greedy}
 \title{Factor Loading Adaptive Shrinkage (K factors version)}
 \usage{
-greedy(Y, K)
+greedy(Y, K, r1_type = "constant")
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
 
 \item{K}{is the max number of factor user want. the output will provide the actual number of factor
 automaticaly.}
+
+\item{r1_type}{is the flag to choose the constant variance for columns or not, defulat is constant}
 }
 \value{
 list of factor, loading and variance of noise matrix

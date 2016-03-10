@@ -4,7 +4,8 @@
 \alias{backfitting}
 \title{backfitting to correct K-factor model}
 \usage{
-backfitting(Y, Lest, Fest, maxiter_bf = 100, maxiter_r1 = 500)
+backfitting(Y, Lest, Fest, maxiter_bf = 100, maxiter_r1 = 500,
+  r1_type = "constant")
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
@@ -16,6 +17,8 @@ backfitting(Y, Lest, Fest, maxiter_bf = 100, maxiter_r1 = 500)
 \item{maxiter_bf}{maximum number of iterations}
 
 \item{maxiter_r1}{maximum number of iterations in flash rank one.}
+
+\item{r1_type}{is the flag to choose the constant variance for columns or not, defulat is constant}
 }
 \value{
 list of factor, loading and variance of noise matrix
