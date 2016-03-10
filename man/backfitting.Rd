@@ -25,6 +25,7 @@ list of factor, loading and variance of noise matrix
  \itemize{
   \item{\code{l}} {is a N by K matrix for loadings}
   \item{\code{f}} {is a P by K matrix for factors}
+  \item{\code{sigmae2}} {is variance for the error, scalar for constant case and vector for nonconstant case}
  }
 }
 \description{

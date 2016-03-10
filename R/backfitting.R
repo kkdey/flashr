@@ -19,6 +19,7 @@
 #'  \itemize{
 #'   \item{\code{l}} {is a N by K matrix for loadings}
 #'   \item{\code{f}} {is a P by K matrix for factors}
+#'   \item{\code{sigmae2}} {is variance for the error, scalar for constant case and vector for nonconstant case}
 #'  }
 #' @examples
 #' N = 100
@@ -43,6 +44,7 @@ backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500,r1_type ="con
     # this one can be put out of the while loop
     residual = Y - Lest %*% t(Fest)
     preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
+    sigmae2_out = 0
     for(i in 1:K){
       residual = residual + Lest[,i] %*% t(Fest[,i])
       if(r1_type == "nonconstant"){
@@ -53,7 +55,9 @@ backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500,r1_type ="con
       Lest[,i] = r_flash$l
       Fest[,i] = r_flash$f
       residual = residual - Lest[,i] %*% t(Fest[,i])
+      sigmae2_out = sigmae2_out + r_flash$sigmae2
     }
+    sigmae2_out = sigmae2_out/K
     # remove the zero in the l and f
     zeros = is_zero_factor(Lest) || is_zero_factor(Fest)
     Lest = Lest[,!zeros,drop=FALSE]
@@ -61,7 +65,7 @@ backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500,r1_type ="con
     RMSfl = sqrt(mean((Lest %*% t(Fest))^2))
     epsilon = abs(preRMSfl - RMSfl)
   }
-  return(list(l = Lest, f = Fest))
+  return(list(l = Lest, f = Fest , sigmae2 = sigmae2_out))
 }
 
 # returns whether a vector is all 0
