@@ -2,7 +2,7 @@
 % Please edit documentation in R/flash_r1c.R
 \name{flash_r1c}
 \alias{flash_r1c}
-\title{Factor Loading Adaptive Shrinkage (VEM version)}
+\title{Factor Loading Adaptive Shrinkage (non-constant on columns)}
 \usage{
 flash_r1c(Y, tol = 1e-06, maxiter_r1 = 500)
 }

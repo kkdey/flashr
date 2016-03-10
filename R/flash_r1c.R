@@ -51,7 +51,7 @@ ATM_l_c = function(Y,Ef,Ef2,sigmae2){
 
 
 
-#' Factor Loading Adaptive Shrinkage (VEM version)
+#' Factor Loading Adaptive Shrinkage (non-constant on columns)
 #'
 #' flash provide rank one matrix decomposition
 #'
