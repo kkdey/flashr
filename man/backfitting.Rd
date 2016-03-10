@@ -2,40 +2,38 @@
 % Please edit documentation in R/backfitting.R
 \name{backfitting}
 \alias{backfitting}
-\title{backfitting for correction K factors model}
+\title{backfitting to correct K-factor model}
 \usage{
 backfitting(Y, Lest, Fest, maxiter_bf = 100, maxiter_r1 = 500)
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
 
-\item{Lest}{is estimation for l to correct}
+\item{Lest}{is estimate for l to correct}
 
-\item{Fest}{is estimation for f to correct}
+\item{Fest}{is estimate for f to correct}
 
-\item{tautol}{this the stop criterion for convergence, number for iteration}
+\item{maxiter_bf}{maximum number of iterations}
 
-\item{numtau}{number for iteration in flash rank one.}
+\item{maxiter_r1}{maximum number of iterations in flash rank one.}
 }
 \value{
 list of factor, loading and variance of noise matrix
  \itemize{
-  \item{\code{l}} {is a K by N matrix for loadings}
-  \item{\code{f}} {is a K by P matrix for factors}
+  \item{\code{l}} {is a N by K matrix for loadings}
+  \item{\code{f}} {is a P by K matrix for factors}
  }
 }
 \description{
-correction the factor and loading matrix estimation using backfitting algorithm
+Correct the factor and loading matrix estimates using backfitting algorithm
 }
 \details{
-greedy algorithm on the residual matrix to get a rank one matrix decomposition
+Repeatedly applies rank 1 algorithm to Y-L[,-i]F[,-i]'
 }
 \examples{
 N = 100
 P = 200
 Y = matrix(rnorm(N*P,0,1),ncol=P)
-L = matrix(rnorm(N*2,0,1),ncol=2)
-F = matrix(rnorm(P*2,0,1),ncol=2)
 g = greedy(Y,K = 10)
 gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 
