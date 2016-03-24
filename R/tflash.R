@@ -208,6 +208,31 @@ tupdate_sig <- function(ssY, Y, ex_list, ex2_vec, beta) {
     return(delta_new)
 }
 
+#' Forms outer product from a list of vectors.
+#'
+#'
+#'
+#'
+#' @param x A list of vectors of positive numerics.
+#'
+#' @return An array of numerics that is the outer products of all of
+#'     the vectors in \code{x}.
+#'
+#'
+#' @export
+#'
+#' @author David Gerard
+form_outer <- function(x) {
+    n <- length(x)
+    theta <- x[[1]]
+    if (n == 1) {
+        return(theta)
+    }
+    for(mode_index in 2:n) {
+        theta <- outer(theta, x[[mode_index]], "*")
+    }
+    return(theta)
+}
 ## n <- 10
 ## p <- 10
 ## Theta <- rnorm(n) %*% t(rnorm(p))
