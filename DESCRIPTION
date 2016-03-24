@@ -8,6 +8,8 @@ Maintainer: Wei Wang <weiwang@galton.uchiccago.edu>
 Description: More about what it does (maybe more than one line)
 License: GPL
 LazyData: TRUE
-Imports: ashr
+Imports: ashr,
+    irlba,
+    tensr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr

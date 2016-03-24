@@ -13,7 +13,7 @@ ATM_f = function(Y,El,El2,sigmae2){
   betahat = (t(El) %*% Y) / (sum_El2)
   # betahat=(sum(l^2))^(-1)*(t(l)%*%Y)
   betahat=as.vector(betahat)
-  ATM = ash(betahat, sebeta, method="fdr", mixcompdist="normal")
+  ATM = ashr::ash(betahat, sebeta, method="fdr", mixcompdist="normal")
   Ef = ATM$PosteriorMean
   SDf = ATM$PosteriorSD
   Ef2 = SDf^2 + Ef^2
@@ -34,7 +34,7 @@ ATM_l = function(Y,Ef,Ef2,sigmae2){
   betahat = (t(Ef) %*% t(Y)) / (sum_Ef2)
   # betahat=(sum(f^2))^(-1)*(t(f)%*%t(Y))
   betahat=as.vector(betahat)
-  ATM = ash(betahat, sebeta, method="fdr", mixcompdist="normal")
+  ATM = ashr::ash(betahat, sebeta, method="fdr", mixcompdist="normal")
   El = ATM$PosteriorMean
   SDl = ATM$PosteriorSD
   El2 = SDl^2 + El^2
