@@ -42,6 +42,10 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
     while(iter_index < itermax & err > tol) {
         old_sig <- esig
         for(mode_index in 1:n) {
+            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
+                ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+                break
+            }
             
             tupdate_out <- tupdate_modek(Y = Y, ex_list = ex_list, ex2_vec = ex2_vec,
                                          esig = esig, k = mode_index, mixcompdist = mixcompdist)
@@ -57,7 +61,7 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
                                  ex2_vec = ex2_vec, beta = beta)
             esig <- gamma / delta
         }
-        iter_inex <- iter_index + 1
+        iter_index <- iter_index + 1
         err <- abs(old_sig/esig - 1)
     }
     return(list(postMean = ex_list, sigma_est = esig))
@@ -97,7 +101,7 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal") 
     sebetahat <- 1 / sqrt(a)
     
     ATM = ashr::ash(betahat = betahat, sebetahat = sebetahat,
-                    method = "fdr", mixcompdist = "normal")
+                    method = "fdr", mixcompdist = mixcompdist)
 
     post_mean <- ATM$PosteriorMean
     post_sd <- ATM$PosteriorSD
