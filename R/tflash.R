@@ -26,7 +26,7 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
     ssY <- sum(Y ^ 2)
 
     ## Initialize Parameters --------------------------------------------
-    init_return <- tinit_components(Y)
+    init_return <- tinit_components_one(Y)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_vec <- init_return$ex2_vec # vector of expected value of x'x
 
@@ -64,7 +64,7 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
 }
 
 
-#' Update the mode k variational density and pi-values
+#' Update the mode k variational density.
 #' 
 #' 
 #' @inheritParams tupdate_sig
@@ -80,9 +80,9 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
 #'     \code{ex2_vec} A vector of starting values of \eqn{E[x'x]}
 #' 
 #' 
+#' @export
 #' 
-#' 
-#' 
+#' @author David Gerard
 #' 
 tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal") {
     p <- dim(Y)
@@ -136,11 +136,48 @@ tinit_components <- function(Y) {
     x <- vector(mode = "list", length = n)
     for(k in 1:n) {
         sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
-        x[[k]] <-  c(sv_out$u)
+        x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
+    }
+    d1 <- abs(as.numeric(tensr::atrans(Y, lapply(x, t))))
+
+    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 / n)
+
+    ex2_vec <- sapply(ex_list, FUN = function(x) { sum(x ^ 2) })
+    return(list(ex_list = ex_list, ex2_vec = ex2_vec))
+}
+
+#' Obtain initial estimates of each mode's components.
+#'
+#' The inital values of each component are taken to be proportional to
+#' the first singular vector of each mode-k matricization of the data
+#' array. The constant is placed entirely on the first mode.
+#'
+#'
+#'
+#' @param Y An array of numerics.
+#'
+#' @return \code{ex_list} A list of vectors of the starting expected
+#'     values of each component.
+#'
+#'
+#'     \code{ex2_vec} A vector of starting values of \eqn{E[x'x]}
+#'
+#'
+#' @author David Gerard
+#'
+#' @export
+tinit_components_one <- function(Y) {
+    p <- dim(Y)
+    n <- length(p)
+    x <- vector(mode = "list", length = n)
+    for(k in 1:n) {
+        sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
+        x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
     }
     d1 <- as.numeric(tensr::atrans(Y, lapply(x, t)))
 
-    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 / n)
+    ex_list <- x
+    ex_list[[1]] <- ex_list[[1]] * d1
 
     ex2_vec <- sapply(ex_list, FUN = function(x) { sum(x ^ 2) })
     return(list(ex_list = ex_list, ex2_vec = ex2_vec))
@@ -171,10 +208,8 @@ tupdate_sig <- function(ssY, Y, ex_list, ex2_vec, beta) {
     return(delta_new)
 }
 
-
-p <- c(10, 10, 10)
-Theta <- outer(outer(rnorm(p[1]), rnorm(p[2])), rnorm(p[3]))
-E <- array(rnorm(prod(p)), dim = p)
-
-Y <- matrix(rnorm(p[1] * p[2]), nrow = p[1])
-
+## n <- 10
+## p <- 10
+## Theta <- rnorm(n) %*% t(rnorm(p))
+## E <- matrix(rnorm(n * p), nrow = n)
+## Y <- Theta + E

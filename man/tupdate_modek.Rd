@@ -2,7 +2,7 @@
 % Please edit documentation in R/tflash.R
 \name{tupdate_modek}
 \alias{tupdate_modek}
-\title{Update the mode k variational density and pi-values}
+\title{Update the mode k variational density.}
 \usage{
 tupdate_modek(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal")
 }
@@ -30,6 +30,9 @@ normal. Options are those available in the \code{ashr} package.}
     \code{ex2_vec} A vector of starting values of \eqn{E[x'x]}
 }
 \description{
-Update the mode k variational density and pi-values
+Update the mode k variational density.
+}
+\author{
+David Gerard
 }
 
