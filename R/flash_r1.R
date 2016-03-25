@@ -56,7 +56,7 @@ ATM_l = function(Y,Ef,Ef2,sigmae2){
 #'
 #' @param Y is the data matrix (N by P)
 #' @param tol which is the stop criterion for the convergence, default is 1e-5
-#' @param numtau number of iteration, default is 500. for the backfitting case, the number of tau should be 5 or 10.
+#' @param maxiter_r1 number of iteration, default is 500. for the backfitting case, the number of tau should be 5 or 10.
 #'
 #' @details flash_r1 privide rank one matrix decomposition with variational EM algorithm.
 #'

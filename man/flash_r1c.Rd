@@ -11,7 +11,7 @@ flash_r1c(Y, tol = 1e-06, maxiter_r1 = 500)
 
 \item{tol}{which is the stop criterion for the convergence, default is 1e-5}
 
-\item{numtau}{number of iteration, default is 500. for the backfitting case, the number of tau should be 5 or 10.}
+\item{maxiter_r1}{number of iteration, default is 500. for the backfitting case, the number of tau should be 5 or 10.}
 }
 \value{
 list of factor, loading and variance of noise matrix

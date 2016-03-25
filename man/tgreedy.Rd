@@ -2,7 +2,7 @@
 % Please edit documentation in R/tbackfit.R
 \name{tgreedy}
 \alias{tgreedy}
-\title{Iteratively do tflash on the residuals.}
+\title{Iteratively do T-FLASH on the residuals.}
 \usage{
 tgreedy(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0,
   beta = 0, mixcompdist = "normal")
@@ -27,9 +27,18 @@ the variance. Defaults to zero.}
 normal. Options are those available in the \code{ashr} package.}
 }
 \description{
-Iteratively do tflash on the residuals.
+This function will estimate a rank-1 tensor using independent
+unimodal priors on the components via a variational EM
+algorithm. It will subtract off the posterior mean from the data
+array, then repeat the estimation procedure on the residuals. It
+continues to do this until the maximum cp-rank \code{k} is reached
+or when all of the components are estimated to be 0.
 }
 \author{
 David Gerard
+}
+\seealso{
+\code{\link{tflash}} for fitting the rank-1 mean tensor
+    model.
 }
 
