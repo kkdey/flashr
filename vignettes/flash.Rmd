@@ -66,7 +66,7 @@ eigenvalue = eigenvalue / sqrt(mean(Y^2))
 plot(eigenvalue)
 
 
-gback = backfitting(Y,gl,gf,tautol = 100, maxiter_r1 = 10)
+gback = backfitting(Y,gl,gf, maxiter_r1 = 10)
 gbl = gback$l
 gbf = gback$f
 dim(gbl)
