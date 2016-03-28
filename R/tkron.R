@@ -60,7 +60,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         ##         ex2_list <- lapply(ex_list, function(x) { x ^ 2 })
         ##     }
         ## }
-        esig_list <- rescale_factors(esig_list)
+        ## esig_list <- rescale_factors(esig_list)
         iter_index <- iter_index + 1
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, num_iter = iter_index))
@@ -177,17 +177,82 @@ tinit_kron_components <- function(Y) {
     ex2_list <- lapply(ex_list, FUN = function(x) { x ^ 2 })
 
     ## huberized initial sigma est
-    resid2 <- (Y - form_mean(ex_list)) ^ 2
+    R <- Y - form_mean(ex_list)
+    esig_list <- diag_mle(R)
+
+    return(list(ex_list = ex_list, ex2_list = ex2_list, esig_list = esig_list))
+}
+
+#' MLE of mean zero Kronecker variance model.
+#' 
+#' @param R An array of numerics.
+#' 
+#' @return \code{esig_list} A list of vectors of numerics. The MLEs of
+#'     the precisions, not the variances.
+#' 
+#' @author David Gerard
+#' 
+#' @export
+diag_mle <- function(R, itermax = 100, tol = 10^-3) {
+    p <- dim(R)
+    n <- length(p)
+    
+    ## huberized initial sigma est
+    resid2 <- R ^ 2
     esig_list <- list()
     for(mode_index in 1:n) {
-        x <- 1 / apply(resid2, mode_index, mean)
+        x <- apply(resid2, mode_index, mean)
         quants <- quantile(x, c(0.25, 0.75))
         x[x > quants[2]] <- quants[2]
         x[x < quants[1]] <- quants[1]
         esig_list[[mode_index]] <- x
     }
+    naive_est <- rescale_factors(esig_list)
 
-    return(list(ex_list = ex_list, ex2_list = ex2_list, esig_list = esig_list))
+    ## Now run MLE algorithm
+    err <- tol + 1
+    iter_index <- 1
+    while(err > tol & iter_index < itermax) {
+        esig_list_old <- esig_list
+        for(mode_index in 1:n) {
+            esig_list <- mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
+        }
+        esig_list <- rescale_factors(esig_list)
+        iter_index <- iter_index + 1
+        err <- sum(abs(esig_list[[1]] - esig_list_old[[1]]))
+    }
+
+    esig_list <- lapply(esig_list, function(x) { 1/x }) # to make it precisions
+    return(esig_list)
+}
+
+
+#' In MLE algorithm for mean zero diagonal Kronecker structured
+#' variance model, update mode k.
+#' 
+#' @param R An array of numerics.
+#' @param esig_list A list of current values of the variances.
+#' @param k The current mode to update
+#' 
+#' @author David Gerard
+#' 
+#' 
+#' 
+#' 
+mle_update_modek <- function(R, esig_list, k) {
+    p <- dim(R)
+    n <- length(p)
+    
+    A <- R
+    for (a_index in (1:n)[-k]) {
+        AM <- (1 / sqrt(esig_list[[a_index]])) * tensr::mat(A, a_index)
+        AMA <- array(AM, dim = c(p[k], p[-k]))
+        A <- aperm(AMA, match(1:n, c(a_index, (1:n)[-a_index])))
+    }
+    a <- rowSums(tensr::mat(A, k) ^ 2)
+
+    esig_list[[k]] <- a / prod(p[-k])
+    return(esig_list)
 }
 
 
@@ -225,3 +290,16 @@ list_prod <- function(A, B) {
 ## plot(yup_out$post_mean[[1]], u[[1]])
 ## plot(yup_out$post_mean[[2]], u[[2]])
 ## plot(yup_out$post_mean[[3]], u[[3]])
+
+
+
+set.seed(31)
+n <- 50
+p <- 50
+u <- rnorm(n)
+v <- rnorm(p)
+row_cov_half <- diag(sqrt(seq(1, 5, length = n)))
+col_cov_half <- diag(sqrt(seq(1, 5, length = p)))
+E <- row_cov_half %*% matrix(rnorm(n * p), nrow = n) %*% col_cov_half
+Y <- u %*% t(v) + E
+
