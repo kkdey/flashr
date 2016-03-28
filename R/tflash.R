@@ -26,7 +26,7 @@ tflash <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0, mixcompdi
     ssY <- sum(Y ^ 2)
 
     ## Initialize Parameters --------------------------------------------
-    init_return <- tinit_components_one(Y)
+    init_return <- tinit_components(Y)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_vec <- init_return$ex2_vec # vector of expected value of x'x
 
@@ -144,7 +144,7 @@ tinit_components <- function(Y) {
     }
     d1 <- abs(as.numeric(tensr::atrans(Y, lapply(x, t))))
 
-    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 / n)
+    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 ^ (1 / n))
 
     ex2_vec <- sapply(ex_list, FUN = function(x) { sum(x ^ 2) })
     return(list(ex_list = ex_list, ex2_vec = ex2_vec))
@@ -237,6 +237,9 @@ form_outer <- function(x) {
     }
     return(theta)
 }
+
+
+
 ## n <- 10
 ## p <- 10
 ## Theta <- rnorm(n) %*% t(rnorm(p))
