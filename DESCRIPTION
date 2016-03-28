@@ -1,13 +1,25 @@
 Package: flashr
 Type: Package
-Title: Title Case
+Title: Factor Loading Adaptive SHrinkage in R
 Version: 0.1.1
 Date: 2016-02-10
-Author: Wei Wang <weiwang@galton.uchiccago.edu> Matthew Stephens <mstephens@uchicago.edu>
-Maintainer: Wei Wang <weiwang@galton.uchiccago.edu>
-Description: More about what it does (maybe more than one line)
-License: GPL
+Authors@R: c(person("Wei", "Wang", email = "weiwang@galton.uchicago.edu", role = c("aut", "cre")),
+             person("David", "Gerard", email = "dcgerard@uchicago.edu", role = "aut"),
+             person("Matthew", "Stephens", email = "mstephens@uchicago.edu", role = "aut"))
+Description: Fits low-rank matrix and tensor mean models using
+             non-parametric unimodal priors on the components.
+             For fitting a rank-1 matrix or tensor mean model,
+             flashr will run a variational expectation-maximization
+             (VEM) algorithm where the componenets and variances are
+             assumed to be separable. For higher-ranks, a greedy algorithm
+             is available where the VEM algorithm is iteratively run on the 
+             residuals of the previous iteration. A backfitting procedure
+             is available for refined estimation.
+License: GPL-3
 LazyData: TRUE
-Imports: ashr
+Imports: ashr,
+    irlba,
+    tensr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
+Suggests: knitr
