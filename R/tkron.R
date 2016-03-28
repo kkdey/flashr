@@ -293,13 +293,13 @@ list_prod <- function(A, B) {
 
 
 
-set.seed(31)
-n <- 50
-p <- 50
-u <- rnorm(n)
-v <- rnorm(p)
-row_cov_half <- diag(sqrt(seq(1, 5, length = n)))
-col_cov_half <- diag(sqrt(seq(1, 5, length = p)))
-E <- row_cov_half %*% matrix(rnorm(n * p), nrow = n) %*% col_cov_half
-Y <- u %*% t(v) + E
+## set.seed(31)
+## n <- 50
+## p <- 50
+## u <- rnorm(n)
+## v <- rnorm(p)
+## row_cov_half <- diag(sqrt(seq(1, 5, length = n)))
+## col_cov_half <- diag(sqrt(seq(1, 5, length = p)))
+## E <- row_cov_half %*% matrix(rnorm(n * p), nrow = n) %*% col_cov_half
+## Y <- u %*% t(v) + E
 
