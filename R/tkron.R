@@ -197,6 +197,12 @@ tinit_kron_components <- function(Y) {
 #' MLE of mean zero Kronecker variance model.
 #' 
 #' @param R An array of numerics.
+#' @param itermax A positive integer. The maximium number of
+#'     iterations to perform.
+#' @param tol A positive numeric. The stopping criterion.
+#' 
+#' 
+#' 
 #' 
 #' @return \code{esig_list} A list of vectors of numerics. The MLEs of
 #'     the precisions, not the variances.

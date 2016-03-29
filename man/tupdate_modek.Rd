@@ -4,7 +4,8 @@
 \alias{tupdate_modek}
 \title{Update the mode k variational density.}
 \usage{
-tupdate_modek(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal")
+tupdate_modek(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
+  which_na = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}
@@ -22,6 +23,11 @@ precision.}
 
 \item{mixcompdist}{The mixing distribution to assume. Defaults to
 normal. Options are those available in the \code{ashr} package.}
+
+\item{which_na}{Either NULL (when complete data) or an array of
+logicals the same dimension as \code{Y}, indicating if the
+observation is missing (\code{TRUE}) or observed
+(\code{FALSE}).}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected

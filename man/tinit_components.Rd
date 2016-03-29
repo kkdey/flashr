@@ -4,10 +4,15 @@
 \alias{tinit_components}
 \title{Obtain initial estimates of each mode's components.}
 \usage{
-tinit_components(Y)
+tinit_components(Y, which_na = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics.}
+
+\item{which_na}{Either NULL (when complete data) or an array of
+logicals the same dimension as \code{Y}, indicating if the
+observation is missing (\code{TRUE}) or observed
+(\code{FALSE}).}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected

@@ -8,6 +8,11 @@ diag_mle(R, itermax = 100, tol = 10^-3)
 }
 \arguments{
 \item{R}{An array of numerics.}
+
+\item{itermax}{A positive integer. The maximium number of
+iterations to perform.}
+
+\item{tol}{A positive numeric. The stopping criterion.}
 }
 \value{
 \code{esig_list} A list of vectors of numerics. The MLEs of
