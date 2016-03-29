@@ -24,8 +24,10 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     }
 
     iter_index <- 1
+    err <- tol + 1
     not_all_zero <- TRUE
-    while (iter_index <= itermax) {
+    while (iter_index <= itermax & err > tol) {
+        esig_list_old <- esig_list
         for (mode_index in 1:n) {
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
@@ -62,6 +64,15 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         ## }
         ## esig_list <- rescale_factors(esig_list)
         iter_index <- iter_index + 1
+
+        err <- 0
+        for (sig_mode_index in 1:n) {
+            old_scaled <- esig_list_old[[sig_mode_index]] /
+                sqrt(sum(esig_list_old[[sig_mode_index]] ^ 2))
+            new_scaled <- esig_list[[sig_mode_index]] /
+                sqrt(sum(esig_list[[sig_mode_index]] ^ 2))
+            err <- err + sum(abs(old_scaled - new_scaled))
+        }
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, num_iter = iter_index))
 }
