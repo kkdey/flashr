@@ -5,10 +5,10 @@
 \title{Update the gamma distribution parameters of the variational
 distribution of the precision sig.}
 \usage{
-tupdate_sig(ssY, Y, ex_list, ex2_vec, beta)
+tupdate_sig(ssY_obs, Y, ex_list, ex2_vec, beta, esig, which_na = NULL)
 }
 \arguments{
-\item{ssY}{A positive numeric. The sum of squares of the data array
+\item{ssY_obs}{A positive numeric. The sum of squares of the data array
 \code{Y}.}
 
 \item{Y}{An array of numerics. The data array.}
@@ -20,6 +20,14 @@ of the components of each mode.}
 \eqn{x'x} for each mode.}
 
 \item{beta}{The prior rate parameter.}
+
+\item{esig}{A positive numeric. The variational expectation of the
+variance.}
+
+\item{which_na}{Either NULL (when complete data) or an array of
+logicals the same dimension as \code{Y}, indicating if the
+observation is missing (\code{TRUE}) or observed
+(\code{FALSE}).}
 }
 \value{
 \code{delta_new} The updated rate parameter of the
