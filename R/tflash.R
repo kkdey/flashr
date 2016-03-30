@@ -82,7 +82,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         
         sig_err <- abs(esig / esig_old - 1)
         iter_index <- iter_index + 1
-        cat(esig, "\n")
+        ##cat(esig, "\n")
     }
 
     iter_index <- 1

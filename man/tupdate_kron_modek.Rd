@@ -5,7 +5,8 @@
 \title{Update the variational density for the kth mode when assuming a
 diagonal Kronecker structured covariance matrix.}
 \usage{
-tupdate_kron_modek(Y, ex_list, ex2_list, esig_list, k, mixcompdist = "normal")
+tupdate_kron_modek(Y, ex_list, ex2_list, esig_list, k, mixcompdist = "normal",
+  which_na = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}
@@ -23,6 +24,11 @@ expected variances.}
 
 \item{mixcompdist}{The mixing distribution to assume. Defaults to
 normal. Options are those available in the \code{ashr} package.}
+
+\item{which_na}{Either NULL (when complete data) or an array of
+logicals the same dimension as \code{Y}, indicating if the
+observation is missing (\code{TRUE}) or observed
+(\code{FALSE}).}
 }
 \description{
 Update the variational density for the kth mode when assuming a

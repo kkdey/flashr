@@ -4,10 +4,14 @@
 \alias{tinit_kron_components}
 \title{Obtain initial estimates of each mode's components.}
 \usage{
-tinit_kron_components(Y)
+tinit_kron_components(Y, which_na = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics.}
+
+\item{which_na}{Either NULL or an array the same dimension as
+\code{Y} indicating if an element of \code{Y} is missing
+(\code{TRUE}) or observed (\code{FALSE}).}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected
