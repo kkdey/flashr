@@ -455,7 +455,12 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
 #' TRUE for fix_factor
 #' FALSE for non-constraint 
 #' @param factor_value is the factor value if the factor is fixed
-#' @keywords internal
+#'
+#' @details flash privide rank one matrix decomposition with variational EM algorithm.
+#'
+#' @export flash
+#'
+#' @importFrom ashr ash
 #'
 flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                  partype = "constant", sigmae2_true = NA, 

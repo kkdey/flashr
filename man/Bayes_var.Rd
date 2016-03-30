@@ -9,7 +9,8 @@ Bayes_var(sigmae2_v, sigmae2_true)
 \arguments{
 \item{sigmae2_v}{residual matrix}
 
-\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
+\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)
+and it is a list of two vectors in this case.}
 }
 \value{
 sig2_out estimated variance structure
