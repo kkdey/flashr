@@ -19,7 +19,10 @@
 #' @keywords internal
 #'
 
-ATM_r1 = function(Y, Ef, Ef2, sigmae2, col_var = "row", nonnegative = FALSE, output = "mean" ){
+ATM_r1 = function(Y, Ef, Ef2, 
+                  sigmae2, col_var = "row", 
+                  nonnegative = FALSE, output = "mean",
+                  partype = "constant"){
   if(is.matrix(sigmae2)){
     # this is for all variance are different
     sum_Ef2 = (1/sigmae2) %*% Ef2
@@ -163,6 +166,9 @@ C_likelihood = function(N,P,sigmae2_v,sigmae2_true){
 
 # objective function
 obj = function(N,P,sigmae2_v,sigmae2_true,par_f,par_l,objtype = "margin_lik"){
+  if(is.list(sigmae2_true)){
+    sigmae2_true = sigmae2_true$sig2_l %*% t(sigmae2_true$sig2_f)
+  }
   if(objtype=="lowerbound_lik"){
     priopost_f = Fval(par_f$mat, par_f$g)$PrioPost
     priopost_l = Fval(par_l$mat, par_l$g)$PrioPost
@@ -174,29 +180,61 @@ obj = function(N,P,sigmae2_v,sigmae2_true,par_f,par_l,objtype = "margin_lik"){
   return(obj_val)
 }
 
-#' title ANOVA for log residual square
+#' title rescale the lambda_l and lambda_f for identifiablity
 #'
-#' description  ANOVA for log residual square
+#' description rescale the lambda_l and lambda_f for identifiablity
 #'
-#' @return estimated variance structure
-#' @param residualsqr residual square
+#' @return a list of sig2_l and sig2_f for the rescaled variance of the kronecker product
+#' @param sig2_l variance of the kronecker product
+#' @param sig2_l variance of the kronecker product
 #' @keywords internal
-#'
+#' 
+rescale_sigmae2_true = function(sig2_l,sig2_f){
+  norm_l = sqrt(sum(sig2_l^2))
+  norm_f = sqrt(sum(sig2_f^2))
+  norm_total = norm_l * norm_f
+  sig2_l = sig2_l / norm_l
+  sig2_f = sig2_f / norm_f
+  sig2_l = sig2_l * sqrt(norm_total)
+  sig2_f = sig2_f * sqrt(norm_total)
+  return(list(sig2_l = sig2_l,sig2_f = sig2_f))
+}  
 
-# the log-ANOVA is not quite good and can not find the right rank zero case.
-# I decide use bayesian method to estimate the sigmae2 matrix
-# log-ANOVA for the sigmae2 matrix
-log_anova = function(residualsqr){
-  N = dim(residualsqr)[1]
-  P = dim(residualsqr)[2]
-  log_res_sqr = log(residualsqr)
-  mu = mean(log_res_sqr)
-  # a = apply(log_res_sqr,1,mean) - mu
-  a = rowMeans(log_res_sqr) - mu
-  # b = apply(log_res_sqr,2,mean) - mu
-  b = colMeans(log_res_sqr) - mu
-  sigmae2_v = mu + matrix(rep(a,P),ncol = P) + matrix(rep(b,each = N),ncol = P)
-  return( exp(sigmae2_v) )
+#' title initial value for Bayes variance structure estimation for kronecker productor
+#'
+#' description initial value for Bayes variance structure estimation for kronecker productor
+#'
+#' @return sig2_out estimated variance structure
+#' @param sigmae2_v  residual matrix
+#' @param sigmae2_true  true variance structure (we use the estimated one to replace that if the truth is unknown)
+#' @keywords internal
+#' 
+inital_Bayes_var = function(sigmae2_v){
+  N = dim(sigmae2_v)[1]
+  P = dim(sigmae2_v)[2]
+  # estimate the initial value of lambda_l and lambda_f
+  sig2_l_pre = rowMeans(sigmae2_v)
+  sig2_f_pre = colMeans( sigmae2_v / matrix(rep(sig2_l_pre,P), ncol = P) )
+  sig2_pre_list = rescale_sigmae2_true(sig2_l_pre,sig2_f_pre)
+  sig2_l_pre = sig2_pre_list$sig2_l
+  sig2_f_pre = sig2_pre_list$sig2_f
+  # start the iteration
+  maxiter = 100
+  inital_tol = 1e-3
+  tau = 0
+  epsilon = 1
+  while(epsilon > inital_tol & tau <= maxiter){
+    tau = tau + 1
+    sig2_l = rowMeans( sigmae2_v / matrix(rep(sig2_f_pre,each = N),ncol = P) )
+    sig2_f = colMeans( sigmae2_v / matrix(rep(sig2_l,P), ncol = P) )
+    sig2_list = rescale_sigmae2_true(sig2_l,sig2_f)
+    sig2_l = sig2_list$sig2_l
+    sig2_f = sig2_list$sig2_f
+    epsilon = sqrt(mean((sig2_f - sig2_f_pre)^2 )) + sqrt(mean((sig2_l - sig2_l_pre)^2))
+    sig2_l_pre = sig2_l
+    sig2_f_pre = sig2_f
+  }
+  return(list(sig2_l = sig2_l,sig2_f = sig2_f))
 }
 
 #' title Bayes variance structure estimation for kronecker productor
@@ -206,29 +244,28 @@ log_anova = function(residualsqr){
 #' @return sig2_out estimated variance structure
 #' @param sigmae2_v  residual matrix
 #' @param sigmae2_true  true variance structure (we use the estimated one to replace that if the truth is unknown)
+#' and it is a list of two vectors in this case.
 #' @keywords internal
 #'
 Bayes_var = function(sigmae2_v,sigmae2_true){
-  if( is.na(sigmae2_true) || !is.matrix(sigmae2_true) ){
-    # we don't know the truth this is in the first iteration
-    sigmae2_true = sigmae2_v
-  }
   N = dim(sigmae2_v)[1]
   P = dim(sigmae2_v)[2]
-  # estimate the initial value of lambda_l and lambda_f
-  log_sig2_true = log(sigmae2_true)
-  mu = mean(log_sig2_true)
-  # a = apply(log_sig2_true,1,mean) - mu
-  a = rowMeans(log_sig2_true) - mu
-  # b = apply(log_sig2_true,2,mean) - mu
-  b = colMeans(log_sig2_true) - mu
-  sig2_l_pre = exp(mu/2 + a)
-  sig2_f_pre = exp(mu/2 + b)
+  if( is.na(sigmae2_true) || !is.list(sigmae2_true) ){
+    # we don't know the truth this is in the first iteration
+    sigmae2_true = inital_Bayes_var(sigmae2_v)
+  }
+  sig2_l_pre = sigmae2_true$sig2_l
+  sig2_f_pre = sigmae2_true$sig2_f
+  # this has already beed rescaled
   # here we use alpha_l = alpha_f = beta_l = beta_f = 0
   sig2_l = rowMeans( sigmae2_v / matrix(rep(sig2_f_pre,each = N),ncol = P) )
-  sig2_f = colMeans( sigmae2_v / matrix(rep(sig2_l_pre,P), ncol = P) )
-  sig2_out = matrix(rep(sig2_l,P),ncol = P) * matrix(rep(sig2_f,each = N),ncol = P)
-  return(sig2_out)
+  sig2_f = colMeans( sigmae2_v / matrix(rep(sig2_l,P), ncol = P) )
+  #rescaled the variance
+  sig2_list = rescale_sigmae2_true(sig2_l,sig2_f)
+  sig2_l = sig2_list$sig2_l
+  sig2_f = sig2_list$sig2_f
+  # sig2_out = matrix(rep(sig2_l,P),ncol = P) * matrix(rep(sig2_f,each = N),ncol = P)
+  return(list(sig2_l = sig2_l,sig2_f = sig2_f))
 }
   
 #' title module for estiamtion of the variance structure
@@ -253,6 +290,7 @@ sigma_est = function(sigmae2_v,sigmae2_true,partype = "constant"){
   } else if(partype == "loganova"){
     sigmae2 = log_anova(sigmae2_v)
   } else if (partype == "Bayes_var"){
+    # here sigmae2_true is a list
     sigmae2 = Bayes_var(sigmae2_v,sigmae2_true)
   }else if (partype == "known"){
     sigmae2 = sigmae2_true
@@ -318,6 +356,10 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
     objtype = "margin_lik"
   }else{
     sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
+    # for the list case in kronecker product
+    if(is.list(sigmae2)){
+      sigmae2 = sigmae2$sig2_l %*% t(sigmae2$sig2_f)
+    }
     # Y = lf^T + E and ATM is for l given f, for f given l we need y^T = fl^T + E^T
     # sigmae2_input = ifelse(is.matrix(sigmae2),t(sigmae2),sigmae2) is wrong here
     if(is.matrix(sigmae2)){
@@ -326,7 +368,8 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
       sigmae2_input = sigmae2
     }
     par_f = ATM_r1(t(Y), El, El2, sigmae2_input,
-                   col_var = "column", nonnegative, output)
+                   col_var = "column", nonnegative,
+                   output,partype)
     Ef = par_f$Ef
     Ef2 = par_f$Ef2
     # if the Ef is zeros ,just return zeros
@@ -346,7 +389,13 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
   }
   
   sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
-  par_l = ATM_r1(Y, Ef, Ef2, sigmae2, col_var = "row", nonnegative, output)
+  if(is.list(sigmae2)){
+    # kronecker product
+    sigmae2 = sigmae2$sig2_l %*% t(sigmae2$sig2_f)
+  }
+  par_l = ATM_r1(Y, Ef, Ef2, 
+                 sigmae2, col_var = "row",
+                 nonnegative, output,partype)
   El = par_l$Ef
   El2 = par_l$Ef2
   # if El is zeros just return
@@ -449,7 +498,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   Ef = g_update$Ef
   Ef2 = g_update$Ef2
   sigmae2_v = g_update$sigmae2_v
-  # sigmae2_true = g_update$sigmae2_true
+  sigmae2_true = g_update$sigmae2_true
   obj_val = g_update$obj_val
   
   epsilon = 1
@@ -471,7 +520,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
     Ef = g_update$Ef
     Ef2 = g_update$Ef2
     sigmae2_v = g_update$sigmae2_v
-    # sigmae2_true = g_update$sigmae2_true
+    sigmae2_true = g_update$sigmae2_true
     obj_val = g_update$obj_val
     
     if(sum(El^2)==0 || sum(Ef^2)==0){
