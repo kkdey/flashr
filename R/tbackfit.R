@@ -177,6 +177,8 @@ replace_factors <- function(factor_list, new_factors, k) {
 #'
 #' @param x A list of vectors.
 #'
+#' @export
+#'
 #' @author David Gerard
 rescale_factors <- function(x) {
     mults <- sapply(x, FUN = function(x) { sqrt(sum(x^2)) })
