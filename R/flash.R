@@ -350,6 +350,12 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
                            fix_factor = FALSE){
   # if fix_factor is True, please choose objtype = "margin_lik"
   output = ifelse(objtype == "lowerbound_lik", "matrix", "mean")
+  # deal with the missing value
+  na_index_Y = is.na(Y)
+  is_missing = any(na_index_Y)  # keep the missing result
+  if(is_missing){
+    Y[na_index_Y] = (El %*% t(Ef))[na_index_Y]
+  }
   if(fix_factor){
     # actually we need do nothing here
     output = "mean"
@@ -385,7 +391,24 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
                   sigmae2_true = sigmae2_true,
                   obj_val = obj_val))
     }
-    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+    # update the Y and the Y^2 in this if else block
+    if(is_missing){
+      ElEf = (El %*% t(Ef))
+      El2Ef2 = (El2 %*% t(Ef2))
+      Y[na_index_Y] = ElEf[na_index_Y]
+      Y2 = Y^2
+      if(is.matrix(sigmae2)){
+        sigmae2_impute = sigmae2[na_index_Y]
+      }else if(is.vector(sigmae2) & length(sigmae2) == length(Ef)){
+        sigmae2_impute = (matrix(rep(sigmae2,each = N),ncol = P))[na_index_Y]
+      }else{
+        sigmae2_impute = sigmae2
+      }
+      Y2[na_index_Y] = El2Ef2[na_index_Y] + sigmae2_impute
+      sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
+    }else{
+      sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+    }
   }
   
   sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
@@ -411,7 +434,23 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
                 sigmae2_true = sigmae2_true,
                 obj_val = obj_val))
   }
-  sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+  if(is_missing){
+    ElEf = (El %*% t(Ef))
+    El2Ef2 = (El2 %*% t(Ef2))
+    Y[na_index_Y] = ElEf[na_index_Y]
+    Y2 = Y^2
+    if(is.matrix(sigmae2)){
+      sigmae2_impute = sigmae2[na_index_Y]
+    }else if(is.vector(sigmae2) & length(sigmae2) == length(Ef)){
+      sigmae2_impute = (matrix(rep(sigmae2,each = N),ncol = P))[na_index_Y]
+    }else{
+      sigmae2_impute = sigmae2
+    }
+    Y2[na_index_Y] = El2Ef2[na_index_Y] + sigmae2_impute
+    sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
+  }else{
+    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+  }
   #use the estiamtion as the truth
   sigmae2_true = sigma_est(sigmae2_v,sigmae2_true,partype)
   obj_val = obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype)
@@ -423,6 +462,70 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
               obj_val = obj_val))
 }
 
+#' inital value for flash
+#' 
+#' description inital value for flash
+#' 
+#' @return list of factor, loading and variance of noise matrix
+#'  \itemize{
+#'   \item{\code{El}} {is a N vector for mean of loadings}
+#'   \item{\code{El2}} {is a N vector for second moment of loadings}
+#'   \item{\code{Ef}} {is a N vector for mean of factors}
+#'   \item{\code{Ef2}} {is a N vector for second moment of factors}
+#'   \item{\code{sigmae2_v}}{is a N by P matrix for residual square}
+#'   \item{\code{sigmae2_true}}{is a N by P matrix for estimated value for the variance structure}
+#'  }
+#' @param Y the data matrix
+#' @param nonnegative if the facotor and loading are nonnegative or not. 
+#' TRUE for nonnegative
+#' FALSE for no constraint
+#' @param fix_factor whether the factor is fixed or not
+#' TRUE for fix_factor
+#' FALSE for non-constraint 
+#' @param factor_value is the factor value if the factor is fixed
+#' @keywords internal
+#'
+initial_value = function(Y, nonnegative = FALSE,
+                         factor_value = NA,fix_factor = FALSE){
+  # use the total mean as the estimated missing value
+  na_index_Y = is.na(Y)
+  is_missing = any(na_index_Y)
+  if(is_missing){
+    Y[na_index_Y] = mean(Y, na.rm = TRUE)
+  }
+  # the flash with plug-in missing value
+  if(fix_factor){
+    Ef = factor_value
+    Ef2 = Ef^2
+    El = as.vector( (Y %*% Ef) / (sum(Ef2)) )
+    El2 = El^2
+  }else{
+    # El = svd(Y)$u[,1]
+    El = as.vector(irlba::irlba(Y,nv = 0,nu = 1)$u)
+    # the nonnegative value need positive inital value
+    if(nonnegative){
+      El = abs(El)
+    }
+    El2 = El^2
+    Ef = as.vector(t(El)%*%Y)
+    Ef2 = Ef^2
+  }
+  # residual matrix initialization
+  # here we don't have any information about the sigmae2_true
+  if(is_missing){
+    ElEf = (El %*% t(Ef))
+    El2Ef2 = (El2 %*% t(Ef2))
+    Y[na_index_Y] = ElEf[na_index_Y]
+    Y2 = Y^2
+    Y2[na_index_Y] = El2Ef2[na_index_Y]
+    sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
+  }else{
+    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+  }
+  return(list(El = El, El2 = El^2,
+              Ef = Ef, Ef2 = Ef^2,
+              sigmae2_v = sigmae2_v))
+}
 
 #' FLASH
 #'
@@ -434,8 +537,6 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
 #'   \item{\code{sigmae2}}{is a N by P matrix for estimated value for the variance structure}
 #'  }
 #' @param Y the data matrix
-#' @param N dimension of Y
-#' @param P dimension of Y
 #' @param tol is for the tolerence for convergence in iterations and ash
 #' @param maciter_r1 is maximum of the iteration times for rank one case
 #' @param sigmae2_true true value for the variance structure
@@ -468,26 +569,14 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                  nonnegative = FALSE, objtype = "margin_lik" ){
   N = dim(Y)[1]
   P = dim(Y)[2]
-  #dealing with missing value
-  Y[is.na(Y)] = 0
-  # initialize the factors and loadings
-  if(fix_factor){
-    Ef = factor_value
-    Ef2 = Ef^2
-    El = as.vector( (Y %*% Ef) / (sum(Ef2)) )
-    El2 = El^2
-  }else{
-    El = svd(Y)$u[,1]
-    # the nonnegative value need positive inital value
-    if(nonnegative){
-      El = abs(El)
-    }
-    El2 = El^2
-    Ef = as.vector(t(El)%*%Y)
-    Ef2 = Ef^2
-  }
-  # residual matrix initialization
-  sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+  
+  # to get the inital values
+  g_inital = initial_value(Y, nonnegative, factor_value, fix_factor)
+  El = g_inital$El
+  Ef = g_inital$Ef
+  El2 = g_inital$El2
+  Ef2 = g_inital$Ef2
+  sigmae2_v = g_inital$sigmae2_v
   
   # start iteration 
   g_update = one_step_update(Y, El, El2, Ef, Ef2,
