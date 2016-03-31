@@ -53,5 +53,7 @@ list of factor, loading and variance of noise matrix
 \description{
 factor loading adaptive shrinkage rank one version
 }
-\keyword{internal}
+\details{
+flash privide rank one matrix decomposition with variational EM algorithm.
+}
 

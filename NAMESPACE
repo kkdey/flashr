@@ -2,6 +2,7 @@
 
 export(backfitting)
 export(diag_mle)
+export(flash)
 export(flash_hd)
 export(flash_r1)
 export(flash_r1c)
