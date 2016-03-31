@@ -19,21 +19,30 @@
 #' @param var_type A string. What variance model should we assume?
 #'     Options are homoscedastic noise (\code{"homoscedastic"}) or
 #'     Kronecker structured variance (\code{kronecker}).
+#' @param sig_start_itermax A positive integer. The number of
+#'     iterations to run in initializing the precision before starting
+#'     the VEM. Defaults to 10.
+#' @param nullweight A numeric greater than or equal to 1. The penalty
+#'     term on the probability of zero.
 #'
 #' @author David Gerard
 #'
 #' @export
 tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
-                   itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal") {
+                   itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
+                   sig_start_itermax = 10, nullweight = 1) {
 
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
     if (var_type == "homoscedastic") {
         flash_out <- tflash_homo(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
-                                 beta = beta, mixcompdist = mixcompdist)
+                                 beta = beta, mixcompdist = mixcompdist,
+                                 sig_start_itermax = sig_start_itermax,
+                                 nullweight = nullweight)
     } else if (var_type == "kronecker") {
         flash_out <- tflash_kron(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
-                                 beta = beta, mixcompdist = mixcompdist)
+                                 beta = beta, mixcompdist = mixcompdist,
+                                 nullweight = nullweight)
     }
     
     return(flash_out)
@@ -49,7 +58,7 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
 #' @author David Gerard
 #'
 tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal") {
+                        mixcompdist = "normal", sig_start_itermax = 10, nullweight = 1) {
     p <- dim(Y)
     n <- length(p)
     ssY_obs <- sum(Y ^ 2, na.rm = TRUE)
@@ -74,7 +83,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     iter_index <- 1
     sig_err <- tol + 1
     esig <- 1 / var(c(Y), na.rm = TRUE)
-    while (iter_index < 100 & sig_err > tol) {
+    while (iter_index < sig_start_itermax & sig_err > tol) {
         esig_old <- esig
         delta <- tupdate_sig(ssY_obs = ssY_obs, Y = Y, ex_list = ex_list, esig = esig,
                              ex2_vec = ex2_vec, beta = beta, which_na = which_na)
@@ -87,6 +96,8 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 
     iter_index <- 1
     err <- tol + 1
+
+    prob_zero <- list()
     
     while(iter_index < itermax & err > tol) {
         old_sig <- esig
@@ -98,9 +109,10 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
             
             tupdate_out <- tupdate_modek(Y = Y, ex_list = ex_list, ex2_vec = ex2_vec,
                                          esig = esig, k = mode_index, mixcompdist = mixcompdist,
-                                         which_na = which_na)
+                                         which_na = which_na, nullweight = nullweight)
             ex_list <- tupdate_out$ex_list
             ex2_vec <- tupdate_out$ex2_vec
+            prob_zero[[mode_index]] <- tupdate_out$prob_zero
             
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
@@ -115,7 +127,8 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         iter_index <- iter_index + 1
         err <- abs(old_sig/esig - 1)
     }
-    return(list(post_mean = ex_list, sigma_est = esig, num_iter = iter_index))
+    return(list(post_mean = ex_list, sigma_est = esig, prob_zero = prob_zero,
+                num_iter = iter_index))
 }
 
 
@@ -135,6 +148,8 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #'     logicals the same dimension as \code{Y}, indicating if the
 #'     observation is missing (\code{TRUE}) or observed
 #'     (\code{FALSE}).
+#' @param nullweight A numeric greater than or equal to 1. The penalty
+#'     term on the probability of a component being zero.
 #' 
 #' @return \code{ex_list} A list of vectors of the starting expected
 #'     values of each component.
@@ -146,7 +161,8 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #' 
 #' @author David Gerard
 #' 
-tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal", which_na = NULL) {
+tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
+                          which_na = NULL, nullweight = 1) {
     p <- dim(Y)
     n <- length(p)
 
@@ -163,15 +179,15 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal", 
     sebetahat <- 1 / sqrt(a)
     
     ATM = ashr::ash(betahat = betahat, sebetahat = sebetahat,
-                    method = "fdr", mixcompdist = mixcompdist)
+                    method = "fdr", mixcompdist = mixcompdist, nullweight = nullweight)
 
     post_mean <- ATM$PosteriorMean
     post_sd <- ATM$PosteriorSD
     ## mix_prop <- ATM$fitted.g$pi
     ex_list[[k]] <- post_mean
     ex2_vec[k] <- sum(post_sd ^ 2 + post_mean ^ 2)
-
-    return(list(ex_list = ex_list, ex2_vec = ex2_vec))
+    prob_zero <- ATM$ZeroProb
+    return(list(ex_list = ex_list, ex2_vec = ex2_vec, prob_zero = prob_zero))
 }
 
 
@@ -327,11 +343,11 @@ form_outer <- function(x) {
 
 
 
-## n <- 50
-## p <- 50
-## Theta <- rnorm(n, mean = 1) %*% t(rnorm(p, mean = 1))
-## E <- matrix(rnorm(n * p), nrow = n)
-## Y <- Theta + E
+n <- 50
+p <- 50
+Theta <- rnorm(n, mean = 1) %*% t(rnorm(p, mean = 1))
+E <- matrix(rnorm(n * p), nrow = n)
+Y <- Theta + E
 
 ## pi0 <- 0.8
 ## Omega <- sample(1:(n * p), size = n * p * pi0)

@@ -7,7 +7,7 @@
 #'
 #' @author David Gerard
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal") {
+                        mixcompdist = "normal", nullweight = 1) {
     p <- dim(Y)
     n <- length(p)
 
@@ -28,6 +28,9 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         post_rate[[mode_index]] <- post_shape[[mode_index]] / esig_list[[mode_index]]
     }
 
+
+    prob_zero <- list()
+    
     iter_index <- 1
     err <- tol + 1
     not_all_zero <- TRUE
@@ -42,10 +45,12 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 
             t_out <- tupdate_kron_modek(Y = Y, ex_list = ex_list, ex2_list = ex2_list,
                                         esig_list = esig_list, k = mode_index,
-                                        mixcompdist = mixcompdist, which_na = which_na)
+                                        mixcompdist = mixcompdist, which_na = which_na,
+                                        nullweight = nullweight)
             ex_list <- t_out$ex_list
             ex2_list <- t_out$ex2_list
-
+            prob_zero[[mode_index]] <- tupdate_kron_modek$prob_zero
+            
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
                 not_all_zero <- FALSE
@@ -80,7 +85,8 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
             err <- err + sum(abs(old_scaled - new_scaled))
         }
     }
-    return(list(post_mean = ex_list, sigma_est = esig_list, num_iter = iter_index))
+    return(list(post_mean = ex_list, sigma_est = esig_list, prob_zero = prob_zero,
+                num_iter = iter_index))
 }
 
 #' Update the variational density for the kth mode when assuming a
@@ -98,7 +104,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #'
 tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
                                mixcompdist = "normal",
-                               which_na = NULL) {
+                               which_na = NULL, nullweight = 1) {
     p <- dim(Y)
 
     if (!is.null(which_na)) {
@@ -115,7 +121,7 @@ tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
     betahat <- b / a
 
     ATM = ashr::ash(betahat = betahat, sebetahat = sebetahat,
-                    method = "fdr", mixcompdist = mixcompdist, nullweight = 1)
+                    method = "fdr", mixcompdist = mixcompdist, nullweight = nullweight)
 
     post_mean <- ATM$PosteriorMean
     post_sd <- ATM$PosteriorSD
@@ -123,7 +129,9 @@ tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
     ex_list[[k]] <- post_mean
     ex2_list[[k]] <- post_mean ^ 2 + post_sd ^ 2
 
-    return(list(ex_list = ex_list, ex2_list = ex2_list))
+    prob_zero <- ATM$ZeroProb
+
+    return(list(ex_list = ex_list, ex2_list = ex2_list, prob_zero = prob_zero))
 }
 
 #' Update the kth mode diagional Kronecker structured covariance

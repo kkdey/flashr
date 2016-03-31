@@ -5,7 +5,7 @@
 \title{title ash type model for l}
 \usage{
 ATM_r1(Y, Ef, Ef2, sigmae2, col_var = "row", nonnegative = FALSE,
-  output = "mean")
+  output = "mean", partype = "constant")
 }
 \arguments{
 \item{Y}{is data matrix}
