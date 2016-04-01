@@ -343,11 +343,11 @@ form_outer <- function(x) {
 
 
 
-n <- 50
-p <- 50
-Theta <- rnorm(n, mean = 1) %*% t(rnorm(p, mean = 1))
-E <- matrix(rnorm(n * p), nrow = n)
-Y <- Theta + E
+## n <- 50
+## p <- 50
+## Theta <- rnorm(n, mean = 1) %*% t(rnorm(p, mean = 1))
+## E <- matrix(rnorm(n * p), nrow = n)
+## Y <- Theta + E
 
 ## pi0 <- 0.8
 ## Omega <- sample(1:(n * p), size = n * p * pi0)

@@ -348,15 +348,15 @@ list_prod <- function(A, B) {
 
 
 
-p <- c(10,10,10)
-u <- list()
-u[[1]] <- rnorm(p[1])
-u[[2]] <- rnorm(p[2])
-u[[3]] <- rnorm(p[3])
+## p <- c(10,10,10)
+## u <- list()
+## u[[1]] <- rnorm(p[1])
+## u[[2]] <- rnorm(p[2])
+## u[[3]] <- rnorm(p[3])
 
-Theta <- outer(outer(u[[1]], u[[2]], "*"), u[[3]], "*")
-E <- array(rnorm(prod(p)), dim = p)
-Y <- Theta + E
+## Theta <- outer(outer(u[[1]], u[[2]], "*"), u[[3]], "*")
+## E <- array(rnorm(prod(p)), dim = p)
+## Y <- Theta + E
 
 ## yup_out <- tflash_kron(Y = Y, alpha = 100, beta = 100)
 ## yup_out
