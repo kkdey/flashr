@@ -49,7 +49,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                                         nullweight = nullweight)
             ex_list <- t_out$ex_list
             ex2_list <- t_out$ex2_list
-            prob_zero[[mode_index]] <- tupdate_kron_modek$prob_zero
+            prob_zero[[mode_index]] <- t_out$prob_zero
             
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
@@ -218,7 +218,11 @@ tinit_kron_components <- function(Y, which_na = NULL) {
     
     x <- vector(mode = "list", length = n)
     for(k in 1:n) {
-        sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
+        sv_out <- tryCatch(irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1),
+                           error = function(){"do_full"})
+        if (identical(sv_out, "do_full")) {
+           sv_out <- svd(tensr::mat(Y, k))$u[,1]
+        }
         x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
     }
     d1 <- abs(as.numeric(tensr::atrans(Y, lapply(x, t))))
@@ -344,15 +348,15 @@ list_prod <- function(A, B) {
 
 
 
-## p <- c(10,10,10)
-## u <- list()
-## u[[1]] <- rnorm(p[1])
-## u[[2]] <- rnorm(p[2])
-## u[[3]] <- rnorm(p[3])
+p <- c(10,10,10)
+u <- list()
+u[[1]] <- rnorm(p[1])
+u[[2]] <- rnorm(p[2])
+u[[3]] <- rnorm(p[3])
 
-## Theta <- outer(outer(u[[1]], u[[2]], "*"), u[[3]], "*")
-## E <- array(rnorm(prod(p)), dim = p)
-## Y <- Theta + E
+Theta <- outer(outer(u[[1]], u[[2]], "*"), u[[3]], "*")
+E <- array(rnorm(prod(p)), dim = p)
+Y <- Theta + E
 
 ## yup_out <- tflash_kron(Y = Y, alpha = 100, beta = 100)
 ## yup_out

@@ -36,10 +36,6 @@ FALSE for no constraint}
 "margin_lik" for conditional likelihood,
 "lowerbound_lik" for full objective function}
 
-\item{N}{dimension of Y}
-
-\item{P}{dimension of Y}
-
 \item{maciter_r1}{is maximum of the iteration times for rank one case}
 }
 \value{
