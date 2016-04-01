@@ -5,7 +5,7 @@
 \title{Update the mode k variational density.}
 \usage{
 tupdate_modek(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
-  which_na = NULL)
+  which_na = NULL, nullweight = 1)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}
@@ -28,6 +28,9 @@ normal. Options are those available in the \code{ashr} package.}
 logicals the same dimension as \code{Y}, indicating if the
 observation is missing (\code{TRUE}) or observed
 (\code{FALSE}).}
+
+\item{nullweight}{A numeric greater than or equal to 1. The penalty
+term on the probability of a component being zero.}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected

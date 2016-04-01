@@ -5,7 +5,8 @@
 \title{Iteratively do T-FLASH on the residuals.}
 \usage{
 tgreedy(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0,
-  beta = 0, mixcompdist = "normal")
+  beta = 0, mixcompdist = "normal", var_type = c("homoscedastic",
+  "kronecker"), nullweight = 1)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -25,6 +26,34 @@ the variance. Defaults to zero.}
 
 \item{mixcompdist}{The mixing distribution to assume. Defaults to
 normal. Options are those available in the \code{ashr} package.}
+
+\item{var_type}{A string. What variance model should we assume?
+Options are homoscedastic noise (\code{"homoscedastic"}) or
+Kronecker structured variance (\code{kronecker}).}
+
+\item{nullweight}{A numeric greater than or equal to 1. The penalty
+term on the probability of zero.}
+}
+\value{
+\code{factor_list}: A list of matrices of
+    numerics. \code{factor_list[[i]][, j]} contains the \eqn{j}th
+    factor of the \eqn{i}th mode.
+
+    \code{sigma_est}: If \code{var_type = "homoscedastic"}, then
+    \code{sigma_est} is a vector of numerics. \code{sigma_est[i]}
+    is the estimate of the precision during the \eqn{i} iteration
+    of the greedy algorithm. Only the last one (if that) should
+    actually be used for any sort of precision estimate.
+
+    If \code{var_type = "kronecker"}, then \code{sigma_est} is a
+    list of matices. \code{sigma_est[[i]][, j]} is the estimate of
+    the variances for the \eqn{j}th mode during the \eqn{i}th run
+    of the greedy algorithm. Only the final columns (if those) of
+    these matrices should actually be used as any sort of precision
+    estimate.
+
+    \code{rank_final} A non-negative integer. The final estimated
+    cp-rank of the mean.
 }
 \description{
 This function will estimate a rank-1 tensor using independent

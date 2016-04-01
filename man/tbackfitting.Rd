@@ -4,8 +4,9 @@
 \alias{tbackfitting}
 \title{Perform backfitting starting at output of \code{tgreedy}.}
 \usage{
-tbackfitting(Y, factor_list, sig_vec, maxiter_bf = 100, tol_bf = 10^-6,
-  maxiter_vem = 100, mixcompdist = "normal", alpha = 0, beta = 0)
+tbackfitting(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 10^-6,
+  maxiter_vem = 100, var_type = c("homoscedastic", "kronecker"),
+  mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -15,8 +16,10 @@ columns. These are the starting values for the backfitting
 algorithm. The intended starting values are can be obtained
 from \code{\link{tgreedy}}.}
 
-\item{sig_vec}{A vector of positive numerics. The estimates of
-variances that were returned by \code{\link{tgreedy}}.}
+\item{sigma_est}{Either a vector of estimated precisions (when
+\code{var_type = "homoscedastic"}) or a list of matrices whose
+columns are estimated precisions (when \code{var_type =
+"kronecker"}).}
 
 \item{maxiter_bf}{A positive integer. The maximum number of
 backfitting steps to perform.}
@@ -28,12 +31,21 @@ backfitting algorithm.}
 in each VEM algorithm to perform at each iteration of the
 backfitting algorithm.}
 
-\item{mixcompdist}{What should the mixing distribution be? See
-options from the `ashr` package.}
+\item{var_type}{A string. What variance model should we assume?
+Options are homoscedastic noise (\code{"homoscedastic"}) or
+Kronecker structured variance (\code{kronecker}).}
 
-\item{alpha}{The prior shape parameter for the variance.}
+\item{mixcompdist}{The mixing distribution to assume. Defaults to
+normal. Options are those available in the \code{ashr} package.}
 
-\item{beta}{The prior rate parameter for the variance.}
+\item{alpha}{A non-negative numeric. The prior shape parameter for
+the variance. Defaults to zero.}
+
+\item{beta}{A non-negative numeric. The prior rate parameter for
+the variance. Defaults to zero.}
+
+\item{nullweight}{A numeric greater than or equal to 1. The penalty
+term on the probability of zero.}
 }
 \description{
 Perform backfitting starting at output of \code{tgreedy}.
