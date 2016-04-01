@@ -5,7 +5,8 @@
 \title{Tensor Factor Loading Adaptive SHrinkage (T-FLASH).}
 \usage{
 tflash(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
-  itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal")
+  itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
+  sig_start_itermax = 10, nullweight = 1)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -27,6 +28,13 @@ the variance. Defaults to zero.}
 
 \item{mixcompdist}{The mixing distribution to assume. Defaults to
 normal. Options are those available in the \code{ashr} package.}
+
+\item{sig_start_itermax}{A positive integer. The number of
+iterations to run in initializing the precision before starting
+the VEM. Defaults to 10.}
+
+\item{nullweight}{A numeric greater than or equal to 1. The penalty
+term on the probability of zero.}
 }
 \description{
 Fits a rank-1 tensor mean model with a homoscedastic error term. It

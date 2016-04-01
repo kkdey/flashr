@@ -6,7 +6,7 @@
 diagonal Kronecker structured covariance matrix.}
 \usage{
 tupdate_kron_modek(Y, ex_list, ex2_list, esig_list, k, mixcompdist = "normal",
-  which_na = NULL)
+  which_na = NULL, nullweight = 1)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}
@@ -29,6 +29,9 @@ normal. Options are those available in the \code{ashr} package.}
 logicals the same dimension as \code{Y}, indicating if the
 observation is missing (\code{TRUE}) or observed
 (\code{FALSE}).}
+
+\item{nullweight}{A numeric greater than or equal to 1. The penalty
+term on the probability of a component being zero.}
 }
 \description{
 Update the variational density for the kth mode when assuming a

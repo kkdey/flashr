@@ -14,6 +14,26 @@
 #' @inheritParams tflash
 #' @param k The maximum cp-rank of the mean tensor.
 #'
+#' @return \code{factor_list}: A list of matrices of
+#'     numerics. \code{factor_list[[i]][, j]} contains the \eqn{j}th
+#'     factor of the \eqn{i}th mode.
+#'
+#'     \code{sigma_est}: If \code{var_type = "homoscedastic"}, then
+#'     \code{sigma_est} is a vector of numerics. \code{sigma_est[i]}
+#'     is the estimate of the precision during the \eqn{i} iteration
+#'     of the greedy algorithm. Only the last one (if that) should
+#'     actually be used for any sort of precision estimate.
+#'
+#'     If \code{var_type = "kronecker"}, then \code{sigma_est} is a
+#'     list of matices. \code{sigma_est[[i]][, j]} is the estimate of
+#'     the variances for the \eqn{j}th mode during the \eqn{i}th run
+#'     of the greedy algorithm. Only the final columns (if those) of
+#'     these matrices should actually be used as any sort of precision
+#'     estimate.
+#'
+#'     \code{rank_final} A non-negative integer. The final estimated
+#'     cp-rank of the mean.
+#'
 #'
 #' @seealso \code{\link{tflash}} for fitting the rank-1 mean tensor
 #'     model.
@@ -23,43 +43,61 @@
 #' @author David Gerard
 #'
 tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                    mixcompdist = "normal") {
+                    mixcompdist = "normal", var_type = c("homoscedastic", "kronecker"),
+                    nullweight = 1) {
     p <- dim(Y)
     n <- length(p)
     factor_list <- list()
-    sig_vec <- c()
 
+    var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
+
+    sigma_est <- c()
+    
     resids <- Y
     rank_index <- 1
     while (rank_index <= k) {
-        tflash_out <- tflash(resids, tol = tol, itermax = itermax, alpha = alpha, beta = beta,
-                             mixcompdist = mixcompdist)
-
-        sig_vec <- c(sig_vec, tflash_out$sigma_est)
+        if(var_type == "homoscedastic") {
+            tflash_out <- tflash_homo(resids, tol = tol, itermax = itermax, alpha = alpha,
+                                      beta = beta, mixcompdist = mixcompdist,
+                                      nullweight = nullweight)
+            
+            sigma_est <- c(sigma_est, tflash_out$sigma_est)
+        } else if (var_type == "kronecker") {
+            tflash_out <- tflash_kron(resids, tol = tol, itermax = itermax, alpha = alpha,
+                                      beta = beta, mixcompdist = mixcompdist,
+                                      nullweight = nullweight)
+            for(mode_index in 1:n) {
+                if(rank_index > 1) {
+                    sigma_est[[mode_index]] <- cbind(sigma_est[[mode_index]],
+                                                     tflash_out$sigma_est[[mode_index]])
+                } else {
+                    sigma_est[[mode_index]] <- tflash_out$sigma_est[[mode_index]]
+                }
+            }
+        }
         
-        if (sum(abs(tflash_out$postMean[[1]])) < 10^-6) {
+        if (sum(abs(tflash_out$post_mean[[1]])) < 10^-6) {
             break
         }
-        resids <- resids - form_outer(tflash_out$postMean)
+        resids <- resids - form_outer(tflash_out$post_mean)
         
         for(mode_index in 1:n) {
             if(rank_index == 1) {
-                factor_list[[mode_index]] <- tflash_out$postMean[[mode_index]]
+                factor_list[[mode_index]] <- tflash_out$post_mean[[mode_index]]
             } else {
                 factor_list[[mode_index]] <- cbind(factor_list[[mode_index]],
-                                                   tflash_out$postMean[[mode_index]])
+                                                   tflash_out$post_mean[[mode_index]])
             }
         }
         rank_index <- rank_index + 1
     }
 
     rank_final <- unique(sapply(factor_list, ncol))
-    return(list(factor_list = factor_list, sig_vec = sig_vec, rank_final = rank_final))
+    return(list(factor_list = factor_list, sigma_est = sigma_est, rank_final = rank_final))
 }
 
 #' Perform backfitting starting at output of \code{tgreedy}.
 #'
-#' @param Y An array of numerics. The data.
 #' @param factor_list A list of matrices with the same number of
 #'     columns. These are the starting values for the backfitting
 #'     algorithm. The intended starting values are can be obtained
@@ -69,23 +107,22 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
 #' @param maxiter_vem A positive integer. The maximum number of steps
 #'     in each VEM algorithm to perform at each iteration of the
 #'     backfitting algorithm.
-#' @param mixcompdist What should the mixing distribution be? See
-#'     options from the `ashr` package.
 #' @param tol_bf A positive numeric. The stopping criterion for the
 #'     backfitting algorithm.
-#' @param alpha The prior shape parameter for the variance.
-#' @param beta The prior rate parameter for the variance.
-#' @param sig_vec A vector of positive numerics. The estimates of
-#'     variances that were returned by \code{\link{tgreedy}}.
+#' @param sigma_est Either a vector of estimated precisions (when
+#'     \code{var_type = "homoscedastic"}) or a list of matrices whose
+#'     columns are estimated precisions (when \code{var_type =
+#'     "kronecker"}).
+#' @inheritParams tflash
 #'
 #' @export
 #'
 #' @author David Gerard
 #'
 #'
-tbackfitting <- function(Y, factor_list, sig_vec, maxiter_bf = 100, tol_bf = 10^-6,
-                         maxiter_vem = 100,
-                         mixcompdist = "normal", alpha = 0, beta = 0) {
+tbackfitting <- function(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 10^-6,
+                         maxiter_vem = 100, var_type = c("homoscedastic", "kronecker"),
+                         mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10) {
     p <- dim(Y)
     n <- length(p)
     factor_list <- lapply(factor_list, change_to_mat)
@@ -95,6 +132,8 @@ tbackfitting <- function(Y, factor_list, sig_vec, maxiter_bf = 100, tol_bf = 10^
         stop("matrices in factor_list need to have the same number of columns")
     }
 
+    var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
+
     resids <- Y
     for (mode_index in 1:k) {
         resids <- resids - get_kth_tensor(factor_list = factor_list, k = mode_index)
@@ -103,23 +142,42 @@ tbackfitting <- function(Y, factor_list, sig_vec, maxiter_bf = 100, tol_bf = 10^
     iter_bf <- 1
     err_bf <- tol_bf + 1
     while (iter_bf < maxiter_bf & err_bf > tol_bf) {
-        sig_old <- sig_vec
+        sig_old <- sigma_est
         
         for (factor_index in 1:k) {
             resids <- resids + get_kth_tensor(factor_list = factor_list, k = factor_index)
-            t_out <- tflash(Y = resids, itermax = maxiter_vem, alpha = alpha, beta = beta,
-                            mixcompdist = mixcompdist)
-            new_factors <- rescale_factors(t_out$postMean)
+
+            if (var_type == "homoscedastic") {
+                t_out <- tflash_homo(Y = resids, itermax = maxiter_vem, alpha = alpha, beta = beta,
+                                     mixcompdist = mixcompdist, nullweight = nullweight)
+                sigma_est[factor_index] <- t_out$sigma_est
+            } else if (var_type == "kronecker") {
+                t_out <- tflash_kron(Y = resids, itermax = maxiter_vem, alpha = alpha, beta = beta,
+                                     mixcompdist = mixcompdist, nullweight = nullweight)
+                sigma_est <- replace_factors(factor_list = sigma_est,
+                                             new_factors = t_out$sigma_est,
+                                             k = factor_index)
+            }
+
+            new_factors <- rescale_factors(t_out$post_mean)
             resids <- resids - form_outer(new_factors)
             factor_list <- replace_factors(factor_list = factor_list,
                                            new_factors = new_factors,
                                            k = factor_index)
-            sig_vec[factor_index] <- t_out$sigma_est
         }
-        err_bf <- sum(abs(sig_old[1:k] - sig_vec[1:k]))
+        
+        if (var_type == "homoscedastic") {
+            err_bf <- sum(abs(sig_old[1:k] - sigma_est[1:k]))
+        } else if (var_type == "kronecker") {
+            err_bf <- 0
+            for (mode_index in 1:n) {
+                err_bf <- sum(abs(sigma_est[[mode_index]] - sig_old[[mode_index]]))
+            }
+        }
+        cat(err_bf, "\n")
         iter_bf <- iter_bf + 1
     }
-    return(list(factor_list = factor_list, sig_vec = sig_vec[1:k]))
+    return(list(factor_list = factor_list, sigma_est = sigma_est))
 }
 
 
@@ -235,7 +293,7 @@ get_kth_column <- function(X, k) {
 ## Y <- Theta + E
 
 
-## p <- c(50, 50, 50)
+## p <- c(10, 10, 10)
 ## u <- list()
 ## u[[1]] <- rnorm(p[1])
 ## u[[2]] <- rnorm(p[2])
@@ -249,13 +307,11 @@ get_kth_column <- function(X, k) {
 ## Theta <- form_outer(u) + form_outer(v)
 ## E <- array(rnorm(prod(p)), dim = p)
 ## Y <- Theta + E
-## t_out <- tgreedy(Y)
+## t_out <- tgreedy(Y, var_type = "kronecker")
 ## factor_list <- t_out$factor_list
-## sig_vec <- t_out$sig_vec
+## sigma_est <- t_out$sigma_est
 
-## b_out <- tbackfitting(Y = Y, factor_list = factor_list, sig_vec = sig_vec)
-
-## t_out
+## b_out <- tbackfitting(Y = Y, factor_list = factor_list, sigma_est = sigma_est, var_type = "kronecker")
 
 ## sum((Theta - form_mean(t_out$factor_list))^2)
 ## sum((Theta - form_mean(b_out$factor_list))^2)
@@ -264,3 +320,16 @@ get_kth_column <- function(X, k) {
 ## plot(t_out$factor_list[[1]][,1], v[[1]])
 ## plot(t_out$factor_list[[2]][,1], v[[2]])
 ## plot(t_out$factor_list[[3]][,1], v[[3]])
+
+## plot(t_out$factor_list[[1]][,2], u[[1]])
+## plot(t_out$factor_list[[2]][,2], u[[2]])
+## plot(t_out$factor_list[[3]][,2], u[[3]])
+
+## plot(b_out$factor_list[[1]][,1], v[[1]])
+## plot(b_out$factor_list[[2]][,1], v[[2]])
+## plot(b_out$factor_list[[3]][,1], v[[3]])
+
+## plot(b_out$factor_list[[1]][,2], u[[1]])
+## plot(b_out$factor_list[[2]][,2], u[[2]])
+## plot(b_out$factor_list[[3]][,2], u[[3]])
+
