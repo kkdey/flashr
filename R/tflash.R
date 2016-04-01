@@ -30,7 +30,7 @@
 #' @export
 tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
                    itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
-                   sig_start_itermax = 10, nullweight = 1) {
+                   sig_start_itermax = 10, nullweight = 10) {
 
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
@@ -58,7 +58,7 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
 #' @author David Gerard
 #'
 tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal", sig_start_itermax = 10, nullweight = 1) {
+                        mixcompdist = "normal", sig_start_itermax = 10, nullweight = 10) {
     p <- dim(Y)
     n <- length(p)
     ssY_obs <- sum(Y ^ 2, na.rm = TRUE)
@@ -179,7 +179,8 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
     sebetahat <- 1 / sqrt(a)
     
     ATM = ashr::ash(betahat = betahat, sebetahat = sebetahat,
-                    method = "fdr", mixcompdist = mixcompdist, nullweight = nullweight)
+                    method = "fdr", mixcompdist = mixcompdist, nullweight = nullweight,
+                    outputlevel = 4)
 
     post_mean <- ATM$PosteriorMean
     post_sd <- ATM$PosteriorSD
@@ -189,6 +190,8 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
     prob_zero <- ATM$ZeroProb
     return(list(ex_list = ex_list, ex2_vec = ex2_vec, prob_zero = prob_zero))
 }
+
+
 
 
 
@@ -348,6 +351,8 @@ form_outer <- function(x) {
 ## Theta <- rnorm(n, mean = 1) %*% t(rnorm(p, mean = 1))
 ## E <- matrix(rnorm(n * p), nrow = n)
 ## Y <- Theta + E
+
+## flash(Y, nonnegative = TRUE)
 
 ## pi0 <- 0.8
 ## Omega <- sample(1:(n * p), size = n * p * pi0)
