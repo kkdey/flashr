@@ -6,7 +6,7 @@
 \usage{
 tgreedy(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0,
   beta = 0, mixcompdist = "normal", var_type = c("homoscedastic",
-  "kronecker"), nullweight = 1)
+  "kronecker"), nullweight = 1, print_update = FALSE)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -33,6 +33,9 @@ Kronecker structured variance (\code{kronecker}).}
 
 \item{nullweight}{A numeric greater than or equal to 1. The penalty
 term on the probability of zero.}
+
+\item{print_update}{A logical. Should we print notifications on how
+far along the optimization is?}
 }
 \value{
 \code{factor_list}: A list of matrices of
