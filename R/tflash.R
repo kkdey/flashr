@@ -24,13 +24,15 @@
 #'     the VEM. Defaults to 10.
 #' @param nullweight A numeric greater than or equal to 1. The penalty
 #'     term on the probability of zero.
+#' @param print_update A logical. Should we print notifications on how
+#'     far along the optimization is?
 #'
 #' @author David Gerard
 #'
 #' @export
 tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
                    itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
-                   sig_start_itermax = 10, nullweight = 10) {
+                   sig_start_itermax = 10, nullweight = 10, print_update = FALSE) {
 
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
@@ -38,11 +40,11 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
         flash_out <- tflash_homo(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
                                  sig_start_itermax = sig_start_itermax,
-                                 nullweight = nullweight)
+                                 nullweight = nullweight, print_update = print_update)
     } else if (var_type == "kronecker") {
         flash_out <- tflash_kron(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
-                                 nullweight = nullweight)
+                                 nullweight = nullweight, print_update = print_update)
     }
     
     return(flash_out)
@@ -58,7 +60,8 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
 #' @author David Gerard
 #'
 tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal", sig_start_itermax = 10, nullweight = 10) {
+                        mixcompdist = "normal", sig_start_itermax = 10, nullweight = 10,
+                        print_update = FALSE) {
     p <- dim(Y)
     n <- length(p)
     ssY_obs <- sum(Y ^ 2, na.rm = TRUE)
@@ -126,6 +129,11 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         }
         iter_index <- iter_index + 1
         err <- abs(old_sig/esig - 1)
+
+        if (print_update & iter_index %% 5 == 0) {
+            cat("Iteration:", iter_index, "\n")
+            cat("Stop Crit:", err, "\n\n")
+        }
     }
     return(list(post_mean = ex_list, sigma_est = esig, prob_zero = prob_zero,
                 num_iter = iter_index))
@@ -162,7 +170,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #' @author David Gerard
 #' 
 tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
-                          which_na = NULL, nullweight = 1) {
+                          which_na = NULL, nullweight = 10) {
     p <- dim(Y)
     n <- length(p)
 

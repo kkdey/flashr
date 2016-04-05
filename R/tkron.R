@@ -7,7 +7,7 @@
 #'
 #' @author David Gerard
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal", nullweight = 1) {
+                        mixcompdist = "normal", nullweight = 10, print_update = FALSE) {
     p <- dim(Y)
     n <- length(p)
 
@@ -84,6 +84,11 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                 sqrt(sum(esig_list[[sig_mode_index]] ^ 2))
             err <- err + sum(abs(old_scaled - new_scaled))
         }
+
+        if (print_update & iter_index %% 5 == 0) {
+            cat("Iteration:", iter_index, "\n")
+            cat("Stop Crit:", err, "\n\n")
+        }
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, prob_zero = prob_zero,
                 num_iter = iter_index))
@@ -104,7 +109,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #'
 tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
                                mixcompdist = "normal",
-                               which_na = NULL, nullweight = 1) {
+                               which_na = NULL, nullweight = 10) {
     p <- dim(Y)
 
     if (!is.null(which_na)) {

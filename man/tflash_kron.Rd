@@ -5,7 +5,7 @@
 \title{Tensor FLASH assuming a diagonal Kronecker structured covariance model.}
 \usage{
 tflash_kron(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-  mixcompdist = "normal", nullweight = 1)
+  mixcompdist = "normal", nullweight = 10, print_update = FALSE)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -26,6 +26,9 @@ normal. Options are those available in the \code{ashr} package.}
 
 \item{nullweight}{A numeric greater than or equal to 1. The penalty
 term on the probability of zero.}
+
+\item{print_update}{A logical. Should we print notifications on how
+far along the optimization is?}
 }
 \description{
 Tensor FLASH assuming a diagonal Kronecker structured covariance model.
