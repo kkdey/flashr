@@ -1,4 +1,4 @@
-#' Factor Loading Adaptive Shrinkage (K factors version)
+#' Factor Loading Adaptive Shrinkage (K factors version using greedy algorithm)
 #'
 #' flash provide rank K matrix decomposition with greedy algorithm
 #'
