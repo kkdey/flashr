@@ -48,6 +48,7 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
     p <- dim(Y)
     n <- length(p)
     factor_list <- list()
+    prob_zero_list <- list()
 
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
@@ -87,9 +88,12 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
         for(mode_index in 1:n) {
             if(rank_index == 1) {
                 factor_list[[mode_index]] <- tflash_out$post_mean[[mode_index]]
+                prob_zero_list[[mode_index]] <- tflash_out$prob_zero[[mode_index]]
             } else {
                 factor_list[[mode_index]] <- cbind(factor_list[[mode_index]],
                                                    tflash_out$post_mean[[mode_index]])
+                prob_zero_list[[mode_index]] <- cbind(prob_zero_list[[mode_index]],
+                                                   tflash_out$prob_zero[[mode_index]])
             }
         }
         rank_index <- rank_index + 1
@@ -97,7 +101,8 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
     }
 
     rank_final <- unique(sapply(factor_list, ncol))
-    return(list(factor_list = factor_list, sigma_est = sigma_est, rank_final = rank_final))
+    return(list(factor_list = factor_list, prob_zero_list = prob_zero_list,
+                sigma_est = sigma_est, rank_final = rank_final))
 }
 
 #' Perform backfitting starting at output of \code{tgreedy}.

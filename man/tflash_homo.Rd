@@ -6,7 +6,7 @@
 \usage{
 tflash_homo(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
   mixcompdist = "normal", sig_start_itermax = 10, nullweight = 10,
-  print_update = FALSE)
+  print_update = FALSE, start = c("first_sv", "random"))
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -34,6 +34,10 @@ term on the probability of zero.}
 
 \item{print_update}{A logical. Should we print notifications on how
 far along the optimization is?}
+
+\item{start}{How should we choose the starting values? Either using
+the first singular vector along each mode (\code{"first_sv"})
+or randomly (\code{"random"}).}
 }
 \description{
 Homoscedastic variance implementation of T-FLASH.
