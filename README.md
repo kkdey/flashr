@@ -10,7 +10,7 @@ Installation
 To install dependencies, run in R:
 
 ``` r
-install.packages(c("irlba", "tensr"))
+install.packages(c("irlba", "tensr", "devtools"))
 devtools::install_github("stephens999/ashr", ref = "uni")
 ```
 
@@ -21,7 +21,7 @@ Because this is currently a private repo, to install flashr you will need a priv
 Then you can run in R:
 
 ``` r
-install_github("stephenslab/flashr", auth_token = "xxx")
+devtools::install_github("stephenslab/flashr", auth_token = "xxx")
 ```
 
 where you replace `xxx` with your PAT.

@@ -44,10 +44,11 @@
 #'
 tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                     mixcompdist = "normal", var_type = c("homoscedastic", "kronecker"),
-                    nullweight = 1) {
+                    nullweight = 1, print_update = FALSE) {
     p <- dim(Y)
     n <- length(p)
     factor_list <- list()
+    prob_zero_list <- list()
 
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
@@ -56,16 +57,19 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
     resids <- Y
     rank_index <- 1
     while (rank_index <= k) {
+        if(print_update) {
+            cat("Current Rank:", rank_index, "\n\n")
+        }
         if(var_type == "homoscedastic") {
             tflash_out <- tflash_homo(resids, tol = tol, itermax = itermax, alpha = alpha,
                                       beta = beta, mixcompdist = mixcompdist,
-                                      nullweight = nullweight)
+                                      nullweight = nullweight, print_update = print_update)
             
             sigma_est <- c(sigma_est, tflash_out$sigma_est)
         } else if (var_type == "kronecker") {
             tflash_out <- tflash_kron(resids, tol = tol, itermax = itermax, alpha = alpha,
                                       beta = beta, mixcompdist = mixcompdist,
-                                      nullweight = nullweight)
+                                      nullweight = nullweight, print_update = print_update)
             for(mode_index in 1:n) {
                 if(rank_index > 1) {
                     sigma_est[[mode_index]] <- cbind(sigma_est[[mode_index]],
@@ -84,16 +88,21 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
         for(mode_index in 1:n) {
             if(rank_index == 1) {
                 factor_list[[mode_index]] <- tflash_out$post_mean[[mode_index]]
+                prob_zero_list[[mode_index]] <- tflash_out$prob_zero[[mode_index]]
             } else {
                 factor_list[[mode_index]] <- cbind(factor_list[[mode_index]],
                                                    tflash_out$post_mean[[mode_index]])
+                prob_zero_list[[mode_index]] <- cbind(prob_zero_list[[mode_index]],
+                                                   tflash_out$prob_zero[[mode_index]])
             }
         }
         rank_index <- rank_index + 1
+        
     }
 
     rank_final <- unique(sapply(factor_list, ncol))
-    return(list(factor_list = factor_list, sigma_est = sigma_est, rank_final = rank_final))
+    return(list(factor_list = factor_list, prob_zero_list = prob_zero_list,
+                sigma_est = sigma_est, rank_final = rank_final))
 }
 
 #' Perform backfitting starting at output of \code{tgreedy}.

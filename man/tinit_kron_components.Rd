@@ -4,7 +4,7 @@
 \alias{tinit_kron_components}
 \title{Obtain initial estimates of each mode's components.}
 \usage{
-tinit_kron_components(Y, which_na = NULL)
+tinit_kron_components(Y, which_na = NULL, start = c("first_sv", "random"))
 }
 \arguments{
 \item{Y}{An array of numerics.}

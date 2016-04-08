@@ -7,16 +7,19 @@
 #'
 #' @author David Gerard
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
-                        mixcompdist = "normal", nullweight = 1) {
+                        mixcompdist = "normal", nullweight = 10, print_update = FALSE,
+                        start = c("first_sv", "random")) {
     p <- dim(Y)
     n <- length(p)
+
+    start <- match.arg(start, c("first_sv", "random"))
 
     which_na <- is.na(Y)
     if (all(!which_na)) {
         which_na <- NULL
     }
 
-    init_return <- tinit_kron_components(Y, which_na = which_na)
+    init_return <- tinit_kron_components(Y, which_na = which_na, start = start)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_list <- init_return$ex2_list # list of expected value of x^2
     esig_list <- init_return$esig_list
@@ -84,6 +87,11 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                 sqrt(sum(esig_list[[sig_mode_index]] ^ 2))
             err <- err + sum(abs(old_scaled - new_scaled))
         }
+
+        if (print_update & iter_index %% 5 == 0) {
+            cat("Iteration:", iter_index, "\n")
+            cat("Stop Crit:", err, "\n\n")
+        }
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, prob_zero = prob_zero,
                 num_iter = iter_index))
@@ -104,7 +112,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 #'
 tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
                                mixcompdist = "normal",
-                               which_na = NULL, nullweight = 1) {
+                               which_na = NULL, nullweight = 10) {
     p <- dim(Y)
 
     if (!is.null(which_na)) {
@@ -208,25 +216,37 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #'
 #' @author David Gerard
 #'
-tinit_kron_components <- function(Y, which_na = NULL) {
+tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random")) {
     p <- dim(Y)
     n <- length(p)
 
+    start <- match.arg(start, c("first_sv", "random"))
+    
     if (!is.null(which_na)) {
         Y[which_na] <- mean(Y, na.rm = TRUE)
     }
     
     x <- vector(mode = "list", length = n)
-    for(k in 1:n) {
-        sv_out <- tryCatch(irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1),
-                           error = function(){"do_full"})
-        if (identical(sv_out, "do_full")) {
-           sv_out <- svd(tensr::mat(Y, k))$u[,1]
+    if (start == "first_sv") {
+        for(k in 1:n) {
+            sv_out <- tryCatch(irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1),
+                               error = function(){"do_full"})
+            if (identical(sv_out, "do_full")) {
+                sv_out <- svd(tensr::mat(Y, k))$u[,1]
+            }
+            x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
         }
-        x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
+    } else if (start == "random") {
+        for (k in 1:n) {
+            x[[k]] <- rnorm(p[k])
+            x[[k]] <- x[[k]] / sqrt(sum(x[[k]] ^ 2))
+        }
     }
-    d1 <- abs(as.numeric(tensr::atrans(Y, lapply(x, t))))
-
+    d1 <- as.numeric(tensr::atrans(Y, lapply(x, t)))
+    if (d1 < 0) {
+        x[[1]] <- x[[1]] * -1
+        d1 <- abs(d1)
+    }
     ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 ^ (1 / n))
 
     ex2_list <- lapply(ex_list, FUN = function(x) { x ^ 2 })
