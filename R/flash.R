@@ -22,7 +22,8 @@
 ATM_r1 = function(Y, Ef, Ef2, 
                   sigmae2, col_var = "row", 
                   nonnegative = FALSE, output = "mean",
-                  partype = "constant"){
+                  partype = "constant",ash_para = list()){
+  # this part is preparing betahat and sebeta for ash
   if(is.matrix(sigmae2)){
     # this is for all variance are different
     sum_Ef2 = (1/sigmae2) %*% Ef2
@@ -53,16 +54,20 @@ ATM_r1 = function(Y, Ef, Ef2,
     betahat = (t(Ef) %*% t(Y)) / (sum_Ef2)
     betahat=as.vector(betahat)
   }
+  # set ash default setting up
+  ash_default = list(betahat = betahat, sebeta = sebeta,
+                     method = "fdr", mixcompdist = "normal")
   # ATM update
   # decide the sign for output
   if(nonnegative){
-    mixdist = "+uniform"
-  }else {
-    mixdist = "normal"
+    ash_default$mixcompdist = "+uniform"
   }
   # decide the output to decide the convergence criterion
   if(output == "matrix"){
-    ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist,outputlevel=4)
+    ash_para$outputlevel = 4
+    ash_para = modifyList(ash_default,ash_para)
+    ATM = do.call(ashr::ash,ash_para)
+    # ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist,outputlevel=4)
     Ef = ATM$PosteriorMean
     SDf = ATM$PosteriorSD
     Ef2 = SDf^2 + Ef^2
@@ -73,7 +78,9 @@ ATM_r1 = function(Y, Ef, Ef2,
                 mat = mat_post,
                 g = fit_g))
   } else {
-    ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist)
+    ash_para = modifyList(ash_default,ash_para)
+    ATM = do.call(ashr::ash,ash_para)
+    # ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist)
     Ef = ATM$PosteriorMean
     SDf = ATM$PosteriorSD
     Ef2 = SDf^2 + Ef^2
@@ -267,7 +274,7 @@ Bayes_var = function(sigmae2_v,sigmae2_true){
   # sig2_out = matrix(rep(sig2_l,P),ncol = P) * matrix(rep(sig2_f,each = N),ncol = P)
   return(list(sig2_l = sig2_l,sig2_f = sig2_f))
 }
-  
+
 #' title module for estiamtion of the variance structure
 #'
 #' description estiamtion of the variance structure
@@ -300,7 +307,7 @@ sigma_est = function(sigmae2_v,sigmae2_true,partype = "constant"){
   }
   return(sigmae2)
 }
-  
+
 #' title one step update in flash iteration using ash
 #'
 #' description one step update in flash iteration using ash
@@ -347,7 +354,8 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
                            nonnegative = FALSE,
                            partype = "constant",
                            objtype = "margin_lik",
-                           fix_factor = FALSE){
+                           fix_factor = FALSE,
+                           ash_para = list()){
   # if fix_factor is True, please choose objtype = "margin_lik"
   output = ifelse(objtype == "lowerbound_lik", "matrix", "mean")
   # deal with the missing value
@@ -375,7 +383,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
     }
     par_f = ATM_r1(t(Y), El, El2, sigmae2_input,
                    col_var = "column", nonnegative,
-                   output,partype)
+                   output,partype,ash_para)
     Ef = par_f$Ef
     Ef2 = par_f$Ef2
     # if the Ef is zeros ,just return zeros
@@ -418,7 +426,8 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
   }
   par_l = ATM_r1(Y, Ef, Ef2, 
                  sigmae2, col_var = "row",
-                 nonnegative, output,partype)
+                 nonnegative, output,
+                 partype, ash_para)
   El = par_l$Ef
   El2 = par_l$Ef2
   # if El is zeros just return
@@ -564,9 +573,21 @@ initial_value = function(Y, nonnegative = FALSE,
 #' @importFrom ashr ash
 #'
 flash = function(Y, tol=1e-5, maxiter_r1 = 500,
-                 partype = "constant", sigmae2_true = NA, 
+                 partype = c("constant","known","Bayes_var","var_col"), 
+                 sigmae2_true = NA, 
                  factor_value = NA,fix_factor = FALSE,
-                 nonnegative = FALSE, objtype = "margin_lik" ){
+                 nonnegative = FALSE,
+                 objtype = c("margin_lik","lowerbound_lik"),
+                 ash_para = list()){
+  # match the parameters
+  partype = match.arg(partype, c("constant","known","Bayes_var","var_col"))
+  objtype = match.arg(objtype, c("margin_lik","lowerbound_lik"))
+  
+  # check the input
+  if( !is.na(sigmae2_true) & partype != "known" ){
+    stop("You should choose partype = 'known' if you want to input the value of sigmae2_true")
+  }
+  
   N = dim(Y)[1]
   P = dim(Y)[2]
   
@@ -585,7 +606,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                              nonnegative ,
                              partype ,
                              objtype ,
-                             fix_factor)
+                             fix_factor,
+                             ash_para)
   # parameters updates
   El = g_update$El
   El2 = g_update$El2
@@ -607,7 +629,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                                nonnegative ,
                                partype ,
                                objtype ,
-                               fix_factor)
+                               fix_factor,
+                               ash_para)
     # parameters updates
     El = g_update$El
     El2 = g_update$El2
