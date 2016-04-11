@@ -2,9 +2,9 @@
 % Please edit documentation in R/greedy.R
 \name{greedy}
 \alias{greedy}
-\title{Factor Loading Adaptive Shrinkage (K factors version)}
+\title{Factor Loading Adaptive Shrinkage (K factors version using greedy algorithm)}
 \usage{
-greedy(Y, K, r1_type = "constant")
+greedy(Y, K, flash_para = list(), gvalue = c("lik", "eigen"))
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
@@ -12,7 +12,11 @@ greedy(Y, K, r1_type = "constant")
 \item{K}{is the max number of factor user want. the output will provide the actual number of factor
 automaticaly.}
 
-\item{r1_type}{is the flag to choose the constant variance for columns or not, defulat is constant}
+\item{flash_para}{is the list for input parameters for flash}
+
+\item{gvalue}{is the output style of greedy algorithm, 
+"lik" provide the lowerbound of loglikelihood
+"eigen" provide the sudo eigenvalue for each factor.}
 }
 \value{
 list of factor, loading and variance of noise matrix

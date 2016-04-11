@@ -648,6 +648,13 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
     epsilon = abs(pre_obj - obj_val)
     print(obj_val)
   }
+  # add one more output for greedy algorithm which not useful here
+  c_lik_val = C_likelihood(N,P,sigmae2_v,sigmae2_true)$c_lik
+  # the above value is not useful, but is helpful to get the postprior value
+  # since obj_val = c_lik_value + priorpost_l + priorpost_f
   sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
-  return(list(l = El, f = Ef, sigmae2 = sigmae2))
+  return(list(l = El, f = Ef, l2 = El2, f2 = Ef2,
+              sigmae2 = sigmae2,
+              obj_val = obj_val,
+              c_lik_val = c_lik_val))
 }
