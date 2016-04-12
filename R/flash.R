@@ -595,6 +595,14 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   sigmae2_true = g_update$sigmae2_true
   obj_val = g_update$obj_val
   
+  # if the first iteration give you a zero output
+  if(sum(El^2)==0 || sum(Ef^2)==0){
+    El = rep(0,length(El))
+    Ef = rep(0,length(Ef))
+    sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
+    return(list(l = El, f = Ef, sigmae2 = sigmae2))
+  }
+  
   epsilon = 1
   tau = 1
   while(epsilon >= tol & tau < maxiter_r1){
