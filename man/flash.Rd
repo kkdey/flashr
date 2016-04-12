@@ -4,9 +4,10 @@
 \alias{flash}
 \title{FLASH}
 \usage{
-flash(Y, tol = 1e-05, maxiter_r1 = 500, partype = "constant",
-  sigmae2_true = NA, factor_value = NA, fix_factor = FALSE,
-  nonnegative = FALSE, objtype = "margin_lik")
+flash(Y, tol = 1e-05, maxiter_r1 = 500, partype = c("constant", "known",
+  "Bayes_var", "var_col"), sigmae2_true = NA, factor_value = NA,
+  fix_factor = FALSE, nonnegative = FALSE, objtype = c("margin_lik",
+  "lowerbound_lik"), ash_para = list())
 }
 \arguments{
 \item{Y}{the data matrix}

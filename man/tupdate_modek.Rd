@@ -5,7 +5,7 @@
 \title{Update the mode k variational density.}
 \usage{
 tupdate_modek(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
-  which_na = NULL, nullweight = 1)
+  which_na = NULL, nullweight = 10)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}

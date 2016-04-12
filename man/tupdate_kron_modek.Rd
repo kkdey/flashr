@@ -6,7 +6,7 @@
 diagonal Kronecker structured covariance matrix.}
 \usage{
 tupdate_kron_modek(Y, ex_list, ex2_list, esig_list, k, mixcompdist = "normal",
-  which_na = NULL, nullweight = 1)
+  which_na = NULL, nullweight = 10)
 }
 \arguments{
 \item{Y}{An array of numerics. The data array.}

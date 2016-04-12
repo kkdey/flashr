@@ -6,7 +6,7 @@
 \usage{
 one_step_update(Y, El, El2, Ef, Ef2, N, P, sigmae2_v, sigmae2_true,
   nonnegative = FALSE, partype = "constant", objtype = "margin_lik",
-  fix_factor = FALSE)
+  fix_factor = FALSE, ash_para = list())
 }
 \arguments{
 \item{Y}{the data matrix}
