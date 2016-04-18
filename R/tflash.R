@@ -125,17 +125,20 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
             tupdate_out <- tupdate_modek(Y = Y, ex_list = ex_list, ex2_vec = ex2_vec,
                                          esig = esig, k = mode_index, mixcompdist = mixcompdist,
                                          which_na = which_na, nullweight = nullweight)
-            if(any(is.na(tupdate_out$ex2_vec))) { stop("na") }
+            
+            if(sum(abs(tupdate_out$ex_list[[mode_index]])) < 10^-6) {
+              ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+              break
+            }
+            
+            if(any(is.na(tupdate_out$ex2_vec))) { stop("na in ex2_vec") }
 
 
             ex_list <- tupdate_out$ex_list
             ex2_vec <- tupdate_out$ex2_vec
             prob_zero[[mode_index]] <- tupdate_out$prob_zero
 
-            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
-              ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
-              break
-            }
+            
 
             delta <- tupdate_sig(ssY_obs = ssY_obs, Y = Y, ex_list = ex_list, esig = esig,
                                  ex2_vec = ex2_vec, beta = beta, which_na = which_na)
