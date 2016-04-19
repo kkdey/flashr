@@ -8,9 +8,16 @@
 #' @author David Gerard
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                         mixcompdist = "normal", nullweight = 10, print_update = FALSE,
-                        start = c("first_sv", "random")) {
+                        start = c("first_sv", "random"), known_modes = NULL,
+                        known_factors = NULL) {
     p <- dim(Y)
     n <- length(p)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+    }
 
     start <- match.arg(start, c("first_sv", "random"))
 
@@ -19,7 +26,9 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         which_na <- NULL
     }
 
-    init_return <- tinit_kron_components(Y, which_na = which_na, start = start)
+    init_return <- tinit_kron_components(Y, which_na = which_na, start = start,
+                                         known_factors = known_factors,
+                                         known_modes = known_modes)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_list <- init_return$ex2_list # list of expected value of x^2
     esig_list <- init_return$esig_list
@@ -39,7 +48,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     not_all_zero <- TRUE
     while (iter_index <= itermax & err > tol) {
         esig_list_old <- esig_list
-        for (mode_index in 1:n) {
+        for (mode_index in unknown_modes) {
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
                 not_all_zero <- FALSE
@@ -202,7 +211,7 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #'
 #'
 #'
-#' @param Y An array of numerics.
+#' @inheritParams tflash
 #' @param which_na Either NULL or an array the same dimension as
 #'     \code{Y} indicating if an element of \code{Y} is missing
 #'     (\code{TRUE}) or observed (\code{FALSE}).
@@ -216,9 +225,16 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #'
 #' @author David Gerard
 #'
-tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random")) {
+tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random"),
+                                  known_factors = NULL, known_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+    }
 
     start <- match.arg(start, c("first_sv", "random"))
     
@@ -227,8 +243,22 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
     }
     
     x <- vector(mode = "list", length = n)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+        known_f_index <- 1
+        for(k in known_modes) {
+            x[[k]] <- known_factors[[known_f_index]]
+            known_f_index <- known_f_index + 1
+        }
+    }
+    
+
+    
     if (start == "first_sv") {
-        for(k in 1:n) {
+        for(k in unknown_modes) {
             sv_out <- tryCatch(irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1),
                                error = function(){"do_full"})
             if (identical(sv_out, "do_full")) {
@@ -237,17 +267,23 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
             x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
         }
     } else if (start == "random") {
-        for (k in 1:n) {
+        for (k in unknown_modes) {
             x[[k]] <- rnorm(p[k])
             x[[k]] <- x[[k]] / sqrt(sum(x[[k]] ^ 2))
         }
     }
     d1 <- as.numeric(tensr::atrans(Y, lapply(x, t)))
     if (d1 < 0) {
-        x[[1]] <- x[[1]] * -1
+        x[[min(unknown_modes)]] <- x[[min(unknown_modes)]] * -1
         d1 <- abs(d1)
     }
-    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 ^ (1 / n))
+
+    ## scale the unknown factors
+    ex_list <- x
+    xmult <- d1 ^ (1 / length(unknown_modes))
+    for (mode_index in unknown_modes) {
+        ex_list[[mode_index]] <- x[[mode_index]] * xmult
+    }
 
     ex2_list <- lapply(ex_list, FUN = function(x) { x ^ 2 })
 

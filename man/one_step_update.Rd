@@ -27,18 +27,18 @@ one_step_update(Y, El, El2, Ef, Ef2, N, P, sigmae2_v, sigmae2_true,
 
 \item{sigmae2_true}{estimated value for the variance structure}
 
-\item{nonnegative}{if the facotor and loading are nonnegative or not. 
+\item{nonnegative}{if the facotor and loading are nonnegative or not.
 TRUE for nonnegative
 FALSE for no constraint}
 
-\item{partype}{parameter type for the variance, 
-"constant" for constant variance, 
-"var_col" for nonconstant variance for column, 
+\item{partype}{parameter type for the variance,
+"constant" for constant variance,
+"var_col" for nonconstant variance for column,
 "known" for the kown variance,
 "Bayes_var" for Bayes version of the nonconstant variance for row and column
 "loganova" is anova estiamtion for the log residual square}
 
-\item{objtype}{objective function type, 
+\item{objtype}{objective function type,
 "margin_lik" for conditional likelihood,
 "lowerbound_lik" for full objective function}
 

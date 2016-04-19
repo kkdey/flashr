@@ -29,25 +29,48 @@
 #' @param start How should we choose the starting values? Either using
 #'     the first singular vector along each mode (\code{"first_sv"})
 #'     or randomly (\code{"random"}).
-#'
+#' @param known_factors A list of known factors for the modes
+#'     indicated in \code{known_modes}. Defaults to \code{NULL}, where
+#'     all factors are assumed to be unknown.
+#' @param known_modes A vector of integers. The modes that are
+#'     known. Should be the same length as \code{known_factors}.
+#' 
+#' 
+#' 
 #' @author David Gerard
 #'
 #' @export
 tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
                    itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
                    sig_start_itermax = 10, nullweight = 10, print_update = FALSE,
-                   start = c("first_sv", "random")) {
-
+                   start = c("first_sv", "random"), known_factors = NULL,
+                   known_modes = NULL) {
+    p <- dim(Y)
+    n <- length(p)
+    
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
     start = match.arg(start, c("first_sv", "random"))
+
+    ## checks
+    if (!is.null(known_modes)) {
+        dim_factors <- lapply(known_factors, length)
+        if (is.null(known_factors)) {
+            stop("known_modes is not NULL but known_factors is NULL")
+        } else if (length(known_modes) != length(known_factors)) {
+            stop ("known_modes and known_factors must be of same length")
+        } else if (p[knwon_modes] != dim_factors) {
+            stop("known_factors not the same dimension as modes of Y")
+        }
+    }
     
     if (var_type == "homoscedastic") {
         flash_out <- tflash_homo(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
                                  sig_start_itermax = sig_start_itermax,
                                  nullweight = nullweight, print_update = print_update,
-                                 start = start)
+                                 start = start, known_factors = known_factors,
+                                 known_modes = known_modes)
     } else if (var_type == "kronecker") {
         flash_out <- tflash_kron(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
@@ -69,9 +92,19 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
 #'
 tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                         mixcompdist = "normal", sig_start_itermax = 10, nullweight = 10,
-                        print_update = FALSE, start = c("first_sv", "random")) {
+                        print_update = FALSE, start = c("first_sv", "random"),
+                        known_factors = NULL, known_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
+
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+    }
+
+    
     ssY_obs <- sum(Y ^ 2, na.rm = TRUE)
 
     start <- match.arg(start, c("first_sv", "random"))
@@ -84,9 +117,14 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     num_na <- sum(which_na)
 
     ## Initialize Parameters --------------------------------------------
-    init_return <- tinit_components(Y, which_na, start = start)
+    init_return <- tinit_components(Y = Y, which_na = which_na, start = start,
+                                    known_factors = known_factors,
+                                    known_modes = known_modes)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_vec <- init_return$ex2_vec # vector of expected value of x'x
+
+
+    
 
     ## posterior shape parameter. Does not change.
     gamma <- prod(p) / 2 + alpha
@@ -116,7 +154,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 
     while(iter_index < itermax & err > tol) {
         old_sig <- esig
-        for(mode_index in 1:n) {
+        for(mode_index in unknown_modes) {
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
                 break
@@ -235,7 +273,7 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
 #'
 #'
 #'
-#' @param Y An array of numerics.
+#' @inheritParams tflash
 #' @param which_na Either NULL (when complete data) or an array of
 #'     logicals the same dimension as \code{Y}, indicating if the
 #'     observation is missing (\code{TRUE}) or observed
@@ -251,9 +289,12 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
 #' @author David Gerard
 #'
 #' @export
-tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")) {
+tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random"),
+                             known_factors = NULL, known_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
+
+
 
     start <- match.arg(start, c("first_sv", "random"))
     
@@ -262,13 +303,26 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
     }
 
     x <- vector(mode = "list", length = n)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+        known_f_index <- 1
+        for(k in known_modes) {
+            x[[k]] <- known_factors[[known_f_index]]
+            known_f_index <- known_f_index + 1
+        }
+    }
+
+    
     if (start == "first_sv") {
-        for(k in 1:n) {
+        for(k in unknown_modes) {
             sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
             x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
         }
     } else if (start == "random") {
-        for (k in 1:n) {
+        for (k in unknown_modes) {
             x[[k]] <- rnorm(p[k])
             x[[k]] <- x[[k]] / sqrt(sum(x[[k]] ^ 2))
         }
@@ -279,7 +333,12 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
         d1 <- abs(d1)
     }
 
-    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 ^ (1 / n))
+    ## scale the unknown factors
+    ex_list <- x
+    xmult <- d1 ^ (1 / length(unknown_modes))
+    for (mode_index in unknown_modes) {
+        ex_list[[mode_index]] <- x[[mode_index]] * xmult
+    }
 
     ex2_vec <- sapply(ex_list, FUN = function(x) { sum(x ^ 2) })
     return(list(ex_list = ex_list, ex2_vec = ex2_vec))

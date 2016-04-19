@@ -10,7 +10,7 @@ initial_value(Y, nonnegative = FALSE, factor_value = NA,
 \arguments{
 \item{Y}{the data matrix}
 
-\item{nonnegative}{if the facotor and loading are nonnegative or not. 
+\item{nonnegative}{if the facotor and loading are nonnegative or not.
 TRUE for nonnegative
 FALSE for no constraint}
 

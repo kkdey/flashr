@@ -7,7 +7,8 @@
 tflash(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
   itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
   sig_start_itermax = 10, nullweight = 10, print_update = FALSE,
-  start = c("first_sv", "random"))
+  start = c("first_sv", "random"), known_factors = NULL,
+  known_modes = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -43,6 +44,13 @@ far along the optimization is?}
 \item{start}{How should we choose the starting values? Either using
 the first singular vector along each mode (\code{"first_sv"})
 or randomly (\code{"random"}).}
+
+\item{known_factors}{A list of known factors for the modes
+indicated in \code{known_modes}. Defaults to \code{NULL}, where
+all factors are assumed to be unknown.}
+
+\item{known_modes}{A vector of integers. The modes that are
+known. Should be the same length as \code{known_factors}.}
 }
 \description{
 Fits a rank-1 tensor mean model with a homoscedastic error term. It

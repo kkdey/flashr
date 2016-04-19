@@ -19,8 +19,8 @@
 #' @keywords internal
 #'
 
-ATM_r1 = function(Y, Ef, Ef2, 
-                  sigmae2, col_var = "row", 
+ATM_r1 = function(Y, Ef, Ef2,
+                  sigmae2, col_var = "row",
                   nonnegative = FALSE, output = "mean",
                   partype = "constant",ash_para = list()){
   # this part is preparing betahat and sebeta for ash
@@ -86,7 +86,7 @@ ATM_r1 = function(Y, Ef, Ef2,
     Ef2 = SDf^2 + Ef^2
     return(list(Ef = Ef, Ef2 = Ef2))
   }
-  
+
 }
 
 #' title prior and posterior part in objective function
@@ -104,7 +104,7 @@ Fval = function(mat,fit_g){
   nonzeroindex = which(prior_pi!=0)
   prior_var = (fit_g$sd[nonzeroindex])^2
   prior_pi = prior_pi[nonzeroindex]
-  
+
   mat_postmean = mat$comp_postmean[nonzeroindex,]
   mat_postmean2 = mat$comp_postmean2[nonzeroindex,]
   mat_postprob = mat$comp_postprob[nonzeroindex,]
@@ -132,7 +132,7 @@ Fval = function(mat,fit_g){
 #' description conditional likelihood in objective function
 #'
 #' @return c_lik for the onditional likelihood in objectice function
-#' @param N  dimension of residual matrix 
+#' @param N  dimension of residual matrix
 #' @param P  dimension of residual matrix
 #' @param sigmae2_v  residual matrix
 #' @param sigmae2_true  true variance structure (we use the estimated one to replace that if the truth is unknown)
@@ -159,13 +159,13 @@ C_likelihood = function(N,P,sigmae2_v,sigmae2_true){
 #' description  objective function
 #'
 #' @return obj_val value of the objectice function
-#' @param N  dimension of residual matrix 
+#' @param N  dimension of residual matrix
 #' @param P  dimension of residual matrix
 #' @param sigmae2_v  residual matrix
 #' @param sigmae2_true  true variance structure (we use the estimated one to replace that if the truth is unknown)
 #' @param par_l ash output for l
 #' @param par_f ash output for f
-#' @param objtype  objective function type, 
+#' @param objtype  objective function type,
 #' "margin_lik" for conditional likelihood,
 #' "lowerbound_lik" for full objective function
 #' @keywords internal
@@ -195,7 +195,7 @@ obj = function(N,P,sigmae2_v,sigmae2_true,par_f,par_l,objtype = "margin_lik"){
 #' @param sig2_l variance of the kronecker product
 #' @param sig2_l variance of the kronecker product
 #' @keywords internal
-#' 
+#'
 rescale_sigmae2_true = function(sig2_l,sig2_f){
   norm_l = sqrt(sum(sig2_l^2))
   norm_f = sqrt(sum(sig2_f^2))
@@ -205,7 +205,7 @@ rescale_sigmae2_true = function(sig2_l,sig2_f){
   sig2_l = sig2_l * sqrt(norm_total)
   sig2_f = sig2_f * sqrt(norm_total)
   return(list(sig2_l = sig2_l,sig2_f = sig2_f))
-}  
+}
 
 #' title initial value for Bayes variance structure estimation for kronecker productor
 #'
@@ -215,7 +215,7 @@ rescale_sigmae2_true = function(sig2_l,sig2_f){
 #' @param sigmae2_v  residual matrix
 #' @param sigmae2_true  true variance structure (we use the estimated one to replace that if the truth is unknown)
 #' @keywords internal
-#' 
+#'
 inital_Bayes_var = function(sigmae2_v){
   N = dim(sigmae2_v)[1]
   P = dim(sigmae2_v)[2]
@@ -280,9 +280,9 @@ Bayes_var = function(sigmae2_v,sigmae2_true){
 #' description estiamtion of the variance structure
 #'
 #' @return sigmae2 estimated variance structure
-#' @param partype parameter type for the variance, 
-#' "constant" for constant variance, 
-#' "var_col" for nonconstant variance for column, 
+#' @param partype parameter type for the variance,
+#' "constant" for constant variance,
+#' "var_col" for nonconstant variance for column,
 #' "known" for the kown variance,
 #' "Bayes_var" for Bayes version of the nonconstant variance for row and column
 #' "loganova" is anova estiamtion for the log residual square
@@ -330,24 +330,24 @@ sigma_est = function(sigmae2_v,sigmae2_true,partype = "constant"){
 #' @param Ef2 second moment for the factors
 #' @param sigmae2_v residual square
 #' @param sigmae2_true estimated value for the variance structure
-#' @param nonnegative if the facotor and loading are nonnegative or not. 
+#' @param nonnegative if the facotor and loading are nonnegative or not.
 #' TRUE for nonnegative
 #' FALSE for no constraint
-#' @param partype parameter type for the variance, 
-#' "constant" for constant variance, 
-#' "var_col" for nonconstant variance for column, 
+#' @param partype parameter type for the variance,
+#' "constant" for constant variance,
+#' "var_col" for nonconstant variance for column,
 #' "known" for the kown variance,
 #' "Bayes_var" for Bayes version of the nonconstant variance for row and column
 #' "loganova" is anova estiamtion for the log residual square
-#' @param objtype  objective function type, 
+#' @param objtype  objective function type,
 #' "margin_lik" for conditional likelihood,
 #' "lowerbound_lik" for full objective function
 #' @param fix_factor whether the factor is fixed or not
 #' TRUE for fix_factor
-#' FALSE for non-constraint 
+#' FALSE for non-constraint
 #' @keywords internal
 #'
-# one step update function 
+# one step update function
 one_step_update = function(Y, El, El2, Ef, Ef2,
                            N, P,
                            sigmae2_v, sigmae2_true,
@@ -418,13 +418,13 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
       sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
     }
   }
-  
+
   sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
   if(is.list(sigmae2)){
     # kronecker product
     sigmae2 = sigmae2$sig2_l %*% t(sigmae2$sig2_f)
   }
-  par_l = ATM_r1(Y, Ef, Ef2, 
+  par_l = ATM_r1(Y, Ef, Ef2,
                  sigmae2, col_var = "row",
                  nonnegative, output,
                  partype, ash_para)
@@ -463,7 +463,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
   #use the estiamtion as the truth
   sigmae2_true = sigma_est(sigmae2_v,sigmae2_true,partype)
   obj_val = obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype)
-  
+
   return(list(El = El, El2 = El2,
               Ef = Ef, Ef2 = Ef2,
               sigmae2_v = sigmae2_v,
@@ -472,9 +472,9 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
 }
 
 #' inital value for flash
-#' 
+#'
 #' description inital value for flash
-#' 
+#'
 #' @return list of factor, loading and variance of noise matrix
 #'  \itemize{
 #'   \item{\code{El}} {is a N vector for mean of loadings}
@@ -485,12 +485,12 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
 #'   \item{\code{sigmae2_true}}{is a N by P matrix for estimated value for the variance structure}
 #'  }
 #' @param Y the data matrix
-#' @param nonnegative if the facotor and loading are nonnegative or not. 
+#' @param nonnegative if the facotor and loading are nonnegative or not.
 #' TRUE for nonnegative
 #' FALSE for no constraint
 #' @param fix_factor whether the factor is fixed or not
 #' TRUE for fix_factor
-#' FALSE for non-constraint 
+#' FALSE for non-constraint
 #' @param factor_value is the factor value if the factor is fixed
 #' @keywords internal
 #'
@@ -549,21 +549,21 @@ initial_value = function(Y, nonnegative = FALSE,
 #' @param tol is for the tolerence for convergence in iterations and ash
 #' @param maciter_r1 is maximum of the iteration times for rank one case
 #' @param sigmae2_true true value for the variance structure
-#' @param nonnegative if the facotor and loading are nonnegative or not. 
+#' @param nonnegative if the facotor and loading are nonnegative or not.
 #' TRUE for nonnegative
 #' FALSE for no constraint
-#' @param partype parameter type for the variance, 
-#' "constant" for constant variance, 
-#' "var_col" for nonconstant variance for column, 
+#' @param partype parameter type for the variance,
+#' "constant" for constant variance,
+#' "var_col" for nonconstant variance for column,
 #' "known" for the kown variance,
 #' "Bayes_var" for Bayes version of the nonconstant variance for row and column
 #' "loganova" is anova estiamtion for the log residual square
-#' @param objtype  objective function type, 
+#' @param objtype  objective function type,
 #' "margin_lik" for conditional likelihood,
 #' "lowerbound_lik" for full objective function
 #' @param fix_factor whether the factor is fixed or not
 #' TRUE for fix_factor
-#' FALSE for non-constraint 
+#' FALSE for non-constraint
 #' @param factor_value is the factor value if the factor is fixed
 #'
 #' @details flash privide rank one matrix decomposition with variational EM algorithm.
@@ -573,8 +573,8 @@ initial_value = function(Y, nonnegative = FALSE,
 #' @importFrom ashr ash
 #'
 flash = function(Y, tol=1e-5, maxiter_r1 = 500,
-                 partype = c("constant","known","Bayes_var","var_col"), 
-                 sigmae2_true = NA, 
+                 partype = c("constant","known","Bayes_var","var_col"),
+                 sigmae2_true = NA,
                  factor_value = NA,fix_factor = FALSE,
                  nonnegative = FALSE,
                  objtype = c("margin_lik","lowerbound_lik"),
@@ -582,15 +582,15 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   # match the parameters
   partype = match.arg(partype, c("constant","known","Bayes_var","var_col"))
   objtype = match.arg(objtype, c("margin_lik","lowerbound_lik"))
-  
+
   # check the input
   if( !is.na(sigmae2_true) & partype != "known" ){
     stop("You should choose partype = 'known' if you want to input the value of sigmae2_true")
   }
-  
+
   N = dim(Y)[1]
   P = dim(Y)[2]
-  
+
   # to get the inital values
   g_inital = initial_value(Y, nonnegative, factor_value, fix_factor)
   El = g_inital$El
@@ -598,8 +598,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   El2 = g_inital$El2
   Ef2 = g_inital$Ef2
   sigmae2_v = g_inital$sigmae2_v
-  
-  # start iteration 
+
+  # start iteration
   g_update = one_step_update(Y, El, El2, Ef, Ef2,
                              N, P,
                              sigmae2_v, sigmae2_true,
@@ -616,13 +616,13 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   sigmae2_v = g_update$sigmae2_v
   sigmae2_true = g_update$sigmae2_true
   obj_val = g_update$obj_val
-  
+
   epsilon = 1
   tau = 1
   while(epsilon >= tol & tau < maxiter_r1){
     tau = tau + 1
     pre_obj = obj_val
-    
+
     g_update = one_step_update(Y, El, El2, Ef, Ef2,
                                N, P,
                                sigmae2_v, sigmae2_true,
@@ -639,7 +639,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
     sigmae2_v = g_update$sigmae2_v
     sigmae2_true = g_update$sigmae2_true
     obj_val = g_update$obj_val
-    
+
     if(sum(El^2)==0 || sum(Ef^2)==0){
       El = rep(0,length(El))
       Ef = rep(0,length(Ef))
