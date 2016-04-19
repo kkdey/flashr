@@ -34,9 +34,9 @@
 #'     all factors are assumed to be unknown.
 #' @param known_modes A vector of integers. The modes that are
 #'     known. Should be the same length as \code{known_factors}.
-#' 
-#' 
-#' 
+#'
+#'
+#'
 #' @author David Gerard
 #'
 #' @export
@@ -47,23 +47,23 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
                    known_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
-    
+
     var_type <- match.arg(var_type, c("homoscedastic", "kronecker"))
 
     start = match.arg(start, c("first_sv", "random"))
 
     ## checks
     if (!is.null(known_modes)) {
-        dim_factors <- lapply(known_factors, length)
+        dim_factors <- sapply(known_factors, length)
         if (is.null(known_factors)) {
             stop("known_modes is not NULL but known_factors is NULL")
         } else if (length(known_modes) != length(known_factors)) {
             stop ("known_modes and known_factors must be of same length")
-        } else if (p[knwon_modes] != dim_factors) {
+        } else if (p[known_modes] != dim_factors) {
             stop("known_factors not the same dimension as modes of Y")
         }
     }
-    
+
     if (var_type == "homoscedastic") {
         flash_out <- tflash_homo(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
@@ -104,7 +104,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         unknown_modes <- (1:n)[-known_modes]
     }
 
-    
+
     ssY_obs <- sum(Y ^ 2, na.rm = TRUE)
 
     start <- match.arg(start, c("first_sv", "random"))
@@ -124,7 +124,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     ex2_vec <- init_return$ex2_vec # vector of expected value of x'x
 
 
-    
+
 
     ## posterior shape parameter. Does not change.
     gamma <- prod(p) / 2 + alpha
@@ -150,7 +150,8 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     iter_index <- 1
     err <- tol + 1
 
-    prob_zero <- list()
+    prob_zero <- vector(length = n, mode = "list")
+    pi0vec <- rep(NA, length = n)
 
     while(iter_index < itermax & err > tol) {
         old_sig <- esig
@@ -163,20 +164,22 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
             tupdate_out <- tupdate_modek(Y = Y, ex_list = ex_list, ex2_vec = ex2_vec,
                                          esig = esig, k = mode_index, mixcompdist = mixcompdist,
                                          which_na = which_na, nullweight = nullweight)
-            
+
+            prob_zero[[mode_index]] <- tupdate_out$prob_zero
+            pi0vec[mode_index] <- tupdate_out$pi0
+
             if(sum(abs(tupdate_out$ex_list[[mode_index]])) < 10^-6) {
               ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
               break
             }
-            
+
             if(any(is.na(tupdate_out$ex2_vec))) { stop("na in ex2_vec") }
 
 
             ex_list <- tupdate_out$ex_list
             ex2_vec <- tupdate_out$ex2_vec
-            prob_zero[[mode_index]] <- tupdate_out$prob_zero
 
-            
+
 
             delta <- tupdate_sig(ssY_obs = ssY_obs, Y = Y, ex_list = ex_list, esig = esig,
                                  ex2_vec = ex2_vec, beta = beta, which_na = which_na)
@@ -192,6 +195,7 @@ tflash_homo <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         }
     }
     return(list(post_mean = ex_list, sigma_est = esig, prob_zero = prob_zero,
+                pi0vec = pi0vec,
                 num_iter = iter_index, init_return = init_return))
 }
 
@@ -258,7 +262,8 @@ tupdate_modek <- function(Y, ex_list, ex2_vec, esig, k, mixcompdist = "normal",
     ex_list[[k]] <- post_mean
     ex2_vec[k] <- sum(post_sd ^ 2 + post_mean ^ 2)
     prob_zero <- ATM$ZeroProb
-    return(list(ex_list = ex_list, ex2_vec = ex2_vec, prob_zero = prob_zero))
+    pi0 <- ATM$fitted.g$pi[1]
+    return(list(ex_list = ex_list, ex2_vec = ex2_vec, prob_zero = prob_zero, pi0 = pi0))
 }
 
 
@@ -297,7 +302,7 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
 
 
     start <- match.arg(start, c("first_sv", "random"))
-    
+
     if (!is.null(which_na)) {
         Y[which_na] <- mean(Y, na.rm = TRUE)
     }
@@ -315,7 +320,7 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
         }
     }
 
-    
+
     if (start == "first_sv") {
         for(k in unknown_modes) {
             sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
@@ -327,10 +332,26 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
             x[[k]] <- x[[k]] / sqrt(sum(x[[k]] ^ 2))
         }
     }
-    d1 <- as.numeric(tensr::atrans(Y, lapply(x, t)))
+
+    
+    xscaled <- x
+    if(!is.null(known_modes)) {
+        fnorm_xknown <- rep(NA, length = length(known_modes))
+        km_index <- 1
+        for (mode_index in known_modes) {
+            fnorm_xknown[km_index] <- sqrt(sum(x[[mode_index]] ^ 2))
+            xscaled[[mode_index]] <- x[[mode_index]] / fnorm_xknown[km_index]
+        }
+    }
+    
+    d1 <- as.numeric(tensr::atrans(Y, lapply(xscaled, t)))
     if (d1 < 0) {
-        x[[1]] <- x[[1]] * -1
+        x[[min(unknown_modes)]] <- x[[min(unknown_modes)]] * -1
         d1 <- abs(d1)
+    }
+
+    if(!is.null(known_modes)) {
+        d1 <- d1 / prod(fnorm_xknown)
     }
 
     ## scale the unknown factors

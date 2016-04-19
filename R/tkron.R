@@ -42,6 +42,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 
 
     prob_zero <- list()
+    pi0vec <- rep(NA, length = n)
     
     iter_index <- 1
     err <- tol + 1
@@ -62,6 +63,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
             ex_list <- t_out$ex_list
             ex2_list <- t_out$ex2_list
             prob_zero[[mode_index]] <- t_out$prob_zero
+            pi0vec[mode_index] <- t_out$pi0
             
             if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
                 ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
@@ -103,6 +105,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         }
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, prob_zero = prob_zero,
+                pi0vec = pi0vec,
                 num_iter = iter_index))
 }
 
@@ -147,8 +150,10 @@ tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
     ex2_list[[k]] <- post_mean ^ 2 + post_sd ^ 2
 
     prob_zero <- ATM$ZeroProb
+    pi0 <- ATM$fitted.g$pi[1]
 
-    return(list(ex_list = ex_list, ex2_list = ex2_list, prob_zero = prob_zero))
+    return(list(ex_list = ex_list, ex2_list = ex2_list, prob_zero = prob_zero,
+                pi0 = pi0))
 }
 
 #' Update the kth mode diagional Kronecker structured covariance

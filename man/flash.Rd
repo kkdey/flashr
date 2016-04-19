@@ -37,6 +37,13 @@ FALSE for no constraint}
 "margin_lik" for conditional likelihood,
 "lowerbound_lik" for full objective function}
 
+\item{ash_para}{is the parameters list for ash}
+
+\item{fl_list}{is a list containing all the informations from other factors ans loadings
+l is loadings, f is factors, l2 and f2 are corresponding second moments.
+priorpost_vec is expectation of log piropost ratio 
+clik is conditional likelihood (marginal likelihood)}
+
 \item{maciter_r1}{is maximum of the iteration times for rank one case}
 }
 \value{
