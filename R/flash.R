@@ -142,14 +142,16 @@ Fval = function(mat,fit_g){
 C_likelihood = function(N,P,sigmae2_v,sigmae2_true){
   if(is.matrix(sigmae2_true)){
     c_lik = -(1/2) * sum( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
-  }else if(is.vector(sigmae2_true)){
+  }else if(is.vector(sigmae2_true) & length(sigmae2_true)==P){
     # change the format to fit the conditional likelihood
     sigmae2_v = colMeans(sigmae2_v)
     c_lik = -(N/2) * sum( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
   } else {
     # change the format to fit the conditional likelihood and accelerate the computation.
     sigmae2_v = mean(sigmae2_v)
-    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
+    # c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
+    # here I want to use fully variantional inference Elogsigmae2 rather logEsigmae2
+    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) + log(N*P/2) - digamma(N*P/2))
   }
   return(list(c_lik = c_lik))
 }
@@ -308,6 +310,41 @@ sigma_est = function(sigmae2_v,sigmae2_true,partype = "constant"){
   return(sigmae2)
 }
 
+#' title empirical sample variance matrix estimation 
+#'
+#' description this function is to calculate the empirical sample variance matrix sigmae2_v
+#'
+#' @return sigmae2_v  empirical sample variance matrix
+#' @param Y which is the residual 
+#' @param fl_list this is a list for the El Ef El2 and Ef2 from other factors
+#' @param El mean estimation for the current loading
+#' @param Ef mean estimation for the current factor
+#' @param El2 second momnet estimation for the current factor
+#' @param Ef2 second moment estimation for the current loading
+#' @keywords internal
+#'
+sigmae2_v_est = function(Y,El,Ef,El2,Ef2,fl_list=list()){
+  # in this version of function we haven't included the missing value case in
+  if(length(fl_list)==0){
+    # this is for the rank one case since there are no other factors
+    # here Y is just the original data
+    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+  }else{
+    # this is the for the rank more than one we have other factors
+    # now the Y is residual matrix rather the original matrix
+    # to get the original data we use Yhat 
+    Yhat = Y + fl_list$El %*% t(fl_list$Ef)
+    # the residual matrix should be 
+    # this is for E(l_1f_1+l_2f_2+...+l_kf_k)^2
+    fl_norm = (El%*%t(Ef) + fl_list$El%*%t(fl_list$Ef))^2 - 
+      (El^2 %*% t(Ef^2) + (fl_list$El)^2 %*% t((fl_list$Ef)^2)) +
+      (El2 %*% t(Ef2) + fl_list$El2 %*% t(fl_list$Ef2))
+    sigmae2_v = Yhat^2 - 2* Yhat * (El%*%t(Ef) + fl_list$El%*%t(fl_list$Ef)) + fl_norm
+  }
+  return(sigmae2_v)
+}
+
+
 #' title one step update in flash iteration using ash
 #'
 #' description one step update in flash iteration using ash
@@ -355,7 +392,8 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
                            partype = "constant",
                            objtype = "margin_lik",
                            fix_factor = FALSE,
-                           ash_para = list()){
+                           ash_para = list(),
+                           fl_list=list()){
   # if fix_factor is True, please choose objtype = "margin_lik"
   output = ifelse(objtype == "lowerbound_lik", "matrix", "mean")
   # deal with the missing value
@@ -390,7 +428,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
     if(sum(Ef^2)==0){
       El = rep(0,length(El))
       Ef = rep(0,length(Ef))
-      sigmae2_v = Y^2
+      sigmae2_v =  sigmae2_v_est(Y,El,Ef,El^2,Ef^2,fl_list)
       sigmae2_true = sigma_est(sigmae2_v,sigmae2_true,partype)
       obj_val = obj(N, P, sigmae2_v, sigmae2_true, par_f=NA, par_l=NA, objtype="margin_lik")
       return(list(El = El, El2 = El^2,
@@ -415,7 +453,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
       Y2[na_index_Y] = El2Ef2[na_index_Y] + sigmae2_impute
       sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
     }else{
-      sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+      sigmae2_v = sigmae2_v_est(Y,El,Ef,El2,Ef2,fl_list)
     }
   }
   
@@ -434,7 +472,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
   if(sum(El^2)==0){
     El = rep(0,length(El))
     Ef = rep(0,length(Ef))
-    sigmae2_v = Y^2
+    sigmae2_v = sigmae2_v_est(Y,El,Ef,El^2,Ef^2,fl_list)
     sigmae2_true = sigma_est(sigmae2_v,sigmae2_true,partype)
     obj_val = obj(N, P, sigmae2_v, sigmae2_true, par_f=NA, par_l=NA, objtype="margin_lik")
     return(list(El = El, El2 = El^2,
@@ -458,7 +496,7 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
     Y2[na_index_Y] = El2Ef2[na_index_Y] + sigmae2_impute
     sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
   }else{
-    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+    sigmae2_v =  sigmae2_v_est(Y,El,Ef,El2,Ef2,fl_list)
   }
   #use the estiamtion as the truth
   sigmae2_true = sigma_est(sigmae2_v,sigmae2_true,partype)
@@ -495,7 +533,8 @@ one_step_update = function(Y, El, El2, Ef, Ef2,
 #' @keywords internal
 #'
 initial_value = function(Y, nonnegative = FALSE,
-                         factor_value = NA,fix_factor = FALSE){
+                         factor_value = NA,fix_factor = FALSE,
+                         fl_list=list()){
   # use the total mean as the estimated missing value
   na_index_Y = is.na(Y)
   is_missing = any(na_index_Y)
@@ -529,7 +568,7 @@ initial_value = function(Y, nonnegative = FALSE,
     Y2[na_index_Y] = El2Ef2[na_index_Y]
     sigmae2_v =  Y2 - 2*Y*ElEf + El2Ef2
   }else{
-    sigmae2_v =  Y^2 - 2*Y*(El %*% t(Ef)) + (El2 %*% t(Ef2))
+    sigmae2_v =  sigmae2_v_est(Y,El,Ef,El2,Ef2,fl_list)
   }
   return(list(El = El, El2 = El^2,
               Ef = Ef, Ef2 = Ef^2,
@@ -565,7 +604,12 @@ initial_value = function(Y, nonnegative = FALSE,
 #' TRUE for fix_factor
 #' FALSE for non-constraint 
 #' @param factor_value is the factor value if the factor is fixed
-#'
+#' @param ash_para is the parameters list for ash
+#' @param fl_list is a list containing all the informations from other factors ans loadings
+#' l is loadings, f is factors, l2 and f2 are corresponding second moments.
+#' priorpost_vec is expectation of log piropost ratio 
+#' clik is conditional likelihood (marginal likelihood)
+#' 
 #' @details flash privide rank one matrix decomposition with variational EM algorithm.
 #'
 #' @export flash
@@ -578,7 +622,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                  factor_value = NA,fix_factor = FALSE,
                  nonnegative = FALSE,
                  objtype = c("margin_lik","lowerbound_lik"),
-                 ash_para = list()){
+                 ash_para = list(),
+                 fl_list=list()){
   # match the parameters
   partype = match.arg(partype, c("constant","known","Bayes_var","var_col"))
   objtype = match.arg(objtype, c("margin_lik","lowerbound_lik"))
@@ -592,7 +637,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   P = dim(Y)[2]
   
   # to get the inital values
-  g_inital = initial_value(Y, nonnegative, factor_value, fix_factor)
+  g_inital = initial_value(Y, nonnegative, factor_value, fix_factor,fl_list)
   El = g_inital$El
   Ef = g_inital$Ef
   El2 = g_inital$El2
@@ -607,7 +652,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                              partype ,
                              objtype ,
                              fix_factor,
-                             ash_para)
+                             ash_para,
+                             fl_list)
   # parameters updates
   El = g_update$El
   El2 = g_update$El2
@@ -617,12 +663,20 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   sigmae2_true = g_update$sigmae2_true
   obj_val = g_update$obj_val
   
-  # if the first iteration give you a zero output
+  # track the objective value
+  obj_val_track = c(obj_val)
+  
+  # we should also return when the first run get all zeros
   if(sum(El^2)==0 || sum(Ef^2)==0){
-    El = rep(0,length(El))
-    Ef = rep(0,length(Ef))
+    # add one more output for greedy algorithm which not useful here
+    c_lik_val = C_likelihood(N,P,sigmae2_v,sigmae2_true)$c_lik
+    # the above value is not useful, but is helpful to get the postprior value
+    # since obj_val = c_lik_value + priorpost_l + priorpost_f
     sigmae2 = sigma_est(sigmae2_v,sigmae2_true,partype)
-    return(list(l = El, f = Ef, sigmae2 = sigmae2))
+    return(list(l = El, f = Ef, l2 = El2, f2 = Ef2,
+                sigmae2 = sigmae2,
+                obj_val = obj_val,
+                c_lik_val = c_lik_val))
   }
   
   epsilon = 1
@@ -638,7 +692,8 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
                                partype ,
                                objtype ,
                                fix_factor,
-                               ash_para)
+                               ash_para,
+                               fl_list)
     # parameters updates
     El = g_update$El
     El2 = g_update$El2
@@ -654,7 +709,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
       break
     }
     epsilon = abs(pre_obj - obj_val)
-    print(obj_val)
+    obj_val_track = c(obj_val_track,obj_val)
   }
   # add one more output for greedy algorithm which not useful here
   c_lik_val = C_likelihood(N,P,sigmae2_v,sigmae2_true)$c_lik
@@ -664,5 +719,6 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   return(list(l = El, f = Ef, l2 = El2, f2 = Ef2,
               sigmae2 = sigmae2,
               obj_val = obj_val,
-              c_lik_val = c_lik_val))
+              c_lik_val = c_lik_val,
+              obj_val_track = obj_val_track))
 }

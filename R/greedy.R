@@ -40,7 +40,8 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
                        factor_value = NA,fix_factor = FALSE,
                        nonnegative = FALSE,
                        objtype = "margin_lik",
-                       ash_para = list())
+                       ash_para = list(),
+                       fl_list = list())
   if(gvalue == "lik"){
     flash_default$objtype = "lowerbound_lik"
   }
@@ -50,14 +51,14 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
   # update the input parameters for flash
   flash_para = modifyList(flash_default,flash_para)
   # this is the first rank one decomposition
-  r_flash = do.call(flashr::flash,flash_para)
+  r_flash = do.call(flash,flash_para)
   # get the parameters and the gvalue which is for tracking the factors
   l_temp = r_flash$l
   f_temp = r_flash$f
   # keep the second moment in case
   l2_temp = r_flash$l2
   f2_temp = r_flash$f2
-  priorpost = r_flash$obj - r_flash$c_lik_val
+  priorpost = r_flash$obj_val - r_flash$c_lik_val
   clik = r_flash$c_lik_val
   priorpost_vec = c(priorpost)
   clik_vec = c(clik)
@@ -72,36 +73,53 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
     # keep second moment
     L2_out = l2_temp
     F2_out = f2_temp
+    # restore the mean and second moment into fl_list
+    flash_para$fl_list$El = L_out
+    flash_para$fl_list$Ef = F_out
+    flash_para$fl_list$El2 = L2_out
+    flash_para$fl_list$Ef2 = F2_out
+    # flash_para$fl_list$El2 = L_out^2
+    # flash_para$fl_list$Ef2 = F_out^2
     #get the new residual
     residual = residual - l_temp %*% t(f_temp)
     #itreation for the rank K-1
     for(k in 2:K){
+      print(k)
       # use the residual as the input of the next flash rank one
       flash_para$Y = residual
       #rank one for residual
-      r_flash = do.call(flashr::flash,flash_para)
+      r_flash = do.call(flash,flash_para)
       # get the parameters and the gvalue which is for tracking the factors
       l_temp = r_flash$l
       f_temp = r_flash$f
-      # keep the second moment in case
-      l2_temp = r_flash$l2
-      f2_temp = r_flash$f2
-      priorpost = r_flash$obj - r_flash$c_lik_val
-      clik = r_flash$c_lik_val
-      priorpost_vec = c(priorpost_vec, priorpost)
-      clik_vec = c(clik_vec,clik)
+      # try to output the sigmae2
+      print(r_flash$sigmae2)
       # get the new residual
       residual = residual - l_temp %*% t(f_temp)
       #check if we should stop at this iteration
       if(sum(l_temp^2)==0 | sum(f_temp^2)==0){
         break
       }else{
+        # keep the second moment in case
+        l2_temp = r_flash$l2
+        f2_temp = r_flash$f2
+        priorpost = r_flash$obj_val - r_flash$c_lik_val
+        clik = r_flash$c_lik_val
+        priorpost_vec = c(priorpost_vec, priorpost)
+        clik_vec = c(clik_vec,clik)
         # if not go to next step and restore the l and f
         L_out = cbind(L_out,l_temp)
         F_out = cbind(F_out,f_temp)
         # for second moment 
         L2_out = cbind(L2_out,l2_temp)
         F2_out = cbind(F2_out,f2_temp)
+        # restore the mean and second moment into fl_list
+        flash_para$fl_list$El = L_out
+        flash_para$fl_list$Ef = F_out
+        flash_para$fl_list$El2 = L2_out
+        flash_para$fl_list$Ef2 = F2_out
+        # flash_para$fl_list$El2 = L_out^2
+        # flash_para$fl_list$Ef2 = F_out^2
       }
       # for loop can control the number of the factors if needed
     }
@@ -131,7 +149,7 @@ eigen_plot = function(g,ssY){
   K = dim(g$l)[2]
   eigen_val = rep(0,K)
   for(k in 1:K){
-    eigen_val[k] = sum((g$l[,k] %*% t(g$f[,k]))^2)/ssY
+    eigen_val[k] = sum( (g$l[,k] %*% t(g$f[,k]))^2 ) / ssY
   }
   return(eigen_val)
 }

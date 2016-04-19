@@ -5,7 +5,7 @@
 \title{inital value for flash}
 \usage{
 initial_value(Y, nonnegative = FALSE, factor_value = NA,
-  fix_factor = FALSE)
+  fix_factor = FALSE, fl_list = list())
 }
 \arguments{
 \item{Y}{the data matrix}
