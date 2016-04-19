@@ -58,7 +58,7 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
   # keep the second moment in case
   l2_temp = r_flash$l2
   f2_temp = r_flash$f2
-  priorpost = r_flash$obj - r_flash$c_lik_val
+  priorpost = r_flash$obj_val - r_flash$c_lik_val
   clik = r_flash$c_lik_val
   priorpost_vec = c(priorpost)
   clik_vec = c(clik)
@@ -103,7 +103,7 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
         # keep the second moment in case
         l2_temp = r_flash$l2
         f2_temp = r_flash$f2
-        priorpost = r_flash$obj - r_flash$c_lik_val
+        priorpost = r_flash$obj_val - r_flash$c_lik_val
         clik = r_flash$c_lik_val
         priorpost_vec = c(priorpost_vec, priorpost)
         clik_vec = c(clik_vec,clik)

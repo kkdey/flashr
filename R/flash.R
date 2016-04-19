@@ -142,14 +142,16 @@ Fval = function(mat,fit_g){
 C_likelihood = function(N,P,sigmae2_v,sigmae2_true){
   if(is.matrix(sigmae2_true)){
     c_lik = -(1/2) * sum( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
-  }else if(is.vector(sigmae2_true)){
+  }else if(is.vector(sigmae2_true) & length(sigmae2_true)==P){
     # change the format to fit the conditional likelihood
     sigmae2_v = colMeans(sigmae2_v)
     c_lik = -(N/2) * sum( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
   } else {
     # change the format to fit the conditional likelihood and accelerate the computation.
     sigmae2_v = mean(sigmae2_v)
-    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
+    # c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
+    # here I want to use fully variantional inference Elogsigmae2 rather logEsigmae2
+    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) + log(N*P/2) - digamma(N*P/2))
   }
   return(list(c_lik = c_lik))
 }
@@ -661,6 +663,9 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   sigmae2_true = g_update$sigmae2_true
   obj_val = g_update$obj_val
   
+  # track the objective value
+  obj_val_track = c(obj_val)
+  
   # we should also return when the first run get all zeros
   if(sum(El^2)==0 || sum(Ef^2)==0){
     # add one more output for greedy algorithm which not useful here
@@ -704,7 +709,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
       break
     }
     epsilon = abs(pre_obj - obj_val)
-    print(obj_val)
+    obj_val_track = c(obj_val_track,obj_val)
   }
   # add one more output for greedy algorithm which not useful here
   c_lik_val = C_likelihood(N,P,sigmae2_v,sigmae2_true)$c_lik
@@ -714,5 +719,6 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   return(list(l = El, f = Ef, l2 = El2, f2 = Ef2,
               sigmae2 = sigmae2,
               obj_val = obj_val,
-              c_lik_val = c_lik_val))
+              c_lik_val = c_lik_val,
+              obj_val_track = obj_val_track))
 }
