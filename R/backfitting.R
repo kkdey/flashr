@@ -3,11 +3,13 @@
 #' Correct the factor and loading matrix estimates using backfitting algorithm
 #'
 #' @param Y is the data matrix (N by P)
-#' @param Lest is estimate for l to correct
+#' @param intial_list is the list from intial_list algorithm
 #' @param Fest is estimate for f to correct
 #' @param maxiter_bf maximum number of iterations
-#' @param maxiter_r1 maximum number of iterations in flash rank one.
-#' @param r1_type is the flag to choose the constant variance for columns or not, defulat is constant
+#' @param flash_parais the list for flash parameters setting up
+#' @param  gvalue is for output of the backfit,
+#' "eigen" means just provide the sum of square
+#' "lik" mean provide the lowerbound
 #'
 #' @details Repeatedly applies rank 1 algorithm to Y-L[,-i]F[,-i]'
 #'
@@ -25,47 +27,93 @@
 #' N = 100
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = greedy(Y,K = 10)
+#' g = intial_list(Y,K = 10)
 #' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
-backfitting = function(Y,Lest,Fest,maxiter_bf=100,maxiter_r1 = 500,r1_type ="constant"){
-  # backfitting with initial values
+backfitting = function(Y,intial_list, maxiter_bf=100,
+                       flash_para = list(), gvalue = c("lik","eigen")){
   epsilon = 1
   tau = 1
-  if(is.vector(Lest)){Lest = matrix(Lest,ncol=1)}
-  if(is.vector(Fest)){Fest = matrix(Fest,ncol=1)}
-  if(nrow(Lest)!=nrow(Y)){stop("Lest of wrong dimension for Y")}
-  if(nrow(Fest)!=ncol(Y)){stop("Fest of wrong dimension for Y")}
-
+  N = dim(Y)[1]
+  P = dim(Y)[2]
+  # match the input parameter
+  gvalue = match.arg(gvalue, c("lik","eigen"))
+  # set the default value for flash
+  flash_default = list(tol=1e-5, maxiter_r1 = 500,
+                       partype = "constant", 
+                       sigmae2_true = NA, 
+                       factor_value = NA,fix_factor = FALSE,
+                       nonnegative = FALSE,
+                       objtype = "margin_lik",
+                       ash_para = list(),
+                       fl_list = list())
+  if(gvalue == "lik"){
+    flash_default$objtype = "lowerbound_lik"
+  }
+  # this is never used but just a initail value
+  flash_default$Y = Y
+  flash_para = modifyList(flash_default,flash_para)
+  #initial check
+  if(is.vector(intial_list$l)){intial_list$l = matrix(intial_list$l,ncol=1)}
+  if(is.vector(intial_list$f)){intial_list$f = matrix(intial_list$f,ncol=1)}
+  if(nrow(intial_list$l)!=nrow(Y)){stop("L of wrong dimension for Y")}
+  if(nrow(intial_list$f)!=ncol(Y)){stop("F of wrong dimension for Y")}
+  # now we need to specify the fl_list for each
+  # at first we put all the result from intial_list into the Lest Fest
+  Lest = intial_list$l
+  Fest = intial_list$f
+  L2est = intial_list$l2
+  F2est = intial_list$f2
+  priorpost_vec = intial_list$priorpost_vec
+  # print((sum(priorpost_vec) + intial_list$clik_vec[length(intial_list$clik_vec)]))
+  # print(priorpost_vec)
+  # track the obj value
+  track_obj = c((sum(priorpost_vec) + intial_list$clik_vec[length(intial_list$clik_vec)]))
+  # in the begining we have all the factors storing in the fl_list
   while(epsilon>1e-5 & tau < maxiter_bf){
     tau = tau + 1
     K = dim(Lest)[2]
     if(K==0){break} #tests for case where all factors disappear!
     # this one can be put out of the while loop
-    residual = Y - Lest %*% t(Fest)
     preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
-    sigmae2_out = 0
-    for(i in 1:K){
-      residual = residual + Lest[,i] %*% t(Fest[,i])
-      if(r1_type == "nonconstant"){
-        r_flash = flash_r1c(residual,maxiter_r1 = maxiter_r1)
-      }else{
-        r_flash = flash_r1(residual,maxiter_r1 = maxiter_r1)
-      }
-      Lest[,i] = r_flash$l
-      Fest[,i] = r_flash$f
-      residual = residual - Lest[,i] %*% t(Fest[,i])
-      sigmae2_out = sigmae2_out + r_flash$sigmae2
+    sigmae2_out = rep(0,K)
+    for(k in 1:K){
+      residual = Y - Lest[,-k] %*% t(Fest[,-k])
+      flash_para$Y = residual
+      flash_para$fl_list$El = Lest[,-k]
+      flash_para$fl_list$Ef = Fest[,-k]
+      flash_para$fl_list$Ef2 = F2est[,-k]
+      flash_para$fl_list$El2 = L2est[,-k]
+      # run the rank one flash
+      r_flash = do.call(flash,flash_para)
+      Lest[,k] = r_flash$l
+      Fest[,k] = r_flash$f
+      L2est[,k] = r_flash$l2
+      F2est[,k] = r_flash$f2
+      sigmae2_out[k] = r_flash$sigmae2
+      priorpost = r_flash$obj - r_flash$c_lik_val
+      priorpost_vec[k] = priorpost
+      clik = r_flash$c_lik_val
+      obj_lik = clik + sum(priorpost_vec)
+      track_obj = c(track_obj,obj_lik)
+      # print(obj_lik)
+      # print(priorpost_vec)
+      # print(sqrt(mean((Y - Lest %*% t(Fest) -E)^2)) / sqrt(mean((Y - E)^2)))
     }
-    sigmae2_out = sigmae2_out/K
+    #sigmae2_out = sigmae2_out/K
+    # print(sigmae2_out)
     # remove the zero in the l and f
-    zeros = is_zero_factor(Lest) || is_zero_factor(Fest)
+    # zeros = is_zero_factor(Lest) || is_zero_factor(Fest)  #this is wrong
+    zeros = is_zero_factor(Lest)
     Lest = Lest[,!zeros,drop=FALSE]
     Fest = Fest[,!zeros,drop=FALSE]
+    L2est = L2est[,!zeros,drop=FALSE]
+    F2est = F2est[,!zeros,drop=FALSE]
+    priorpost_vec = priorpost_vec[!zeros,drop = FALSE]
     RMSfl = sqrt(mean((Lest %*% t(Fest))^2))
     epsilon = abs(preRMSfl - RMSfl)
   }
-  return(list(l = Lest, f = Fest , sigmae2 = sigmae2_out))
+  return(list(l = Lest, f = Fest , sigmae2 = sigmae2_out,track_obj = track_obj))
 }
 
 # returns whether a vector is all 0
