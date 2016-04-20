@@ -59,7 +59,7 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
             stop("known_modes is not NULL but known_factors is NULL")
         } else if (length(known_modes) != length(known_factors)) {
             stop ("known_modes and known_factors must be of same length")
-        } else if (p[known_modes] != dim_factors) {
+        } else if (all(p[known_modes] != dim_factors)) {
             stop("known_factors not the same dimension as modes of Y")
         }
     }
@@ -299,7 +299,7 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
     p <- dim(Y)
     n <- length(p)
 
-
+    
 
     start <- match.arg(start, c("first_sv", "random"))
 
@@ -323,8 +323,17 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
 
     if (start == "first_sv") {
         for(k in unknown_modes) {
-            sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
-            x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
+            x[[k]] <- tryCatch(
+            {
+                sv_out <- irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1)
+                c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
+            },
+            error =
+                {
+                    svd(tensr::mat(Y, k))$u[, 1]
+                }
+            )
+            
         }
     } else if (start == "random") {
         for (k in unknown_modes) {
@@ -341,6 +350,7 @@ tinit_components <- function(Y, which_na = NULL, start = c("first_sv", "random")
         for (mode_index in known_modes) {
             fnorm_xknown[km_index] <- sqrt(sum(x[[mode_index]] ^ 2))
             xscaled[[mode_index]] <- x[[mode_index]] / fnorm_xknown[km_index]
+            km_index <- km_index + 1
         }
     }
     

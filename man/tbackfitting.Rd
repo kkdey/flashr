@@ -6,7 +6,8 @@
 \usage{
 tbackfitting(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 10^-6,
   maxiter_vem = 100, var_type = c("homoscedastic", "kronecker"),
-  mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10)
+  mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10,
+  known_factors = NULL, known_modes = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -46,6 +47,13 @@ the variance. Defaults to zero.}
 
 \item{nullweight}{A numeric greater than or equal to 1. The penalty
 term on the probability of zero.}
+
+\item{known_factors}{A list of known factors for the modes
+indicated in \code{known_modes}. Defaults to \code{NULL}, where
+all factors are assumed to be unknown.}
+
+\item{known_modes}{A vector of integers. The modes that are
+known. Should be the same length as \code{known_factors}.}
 }
 \description{
 Perform backfitting starting at output of \code{tgreedy}.
