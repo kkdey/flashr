@@ -19,7 +19,7 @@ obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype = "margin_lik")
 
 \item{par_l}{ash output for l}
 
-\item{objtype}{objective function type, 
+\item{objtype}{objective function type,
 "margin_lik" for conditional likelihood,
 "lowerbound_lik" for full objective function}
 }

@@ -6,7 +6,8 @@
 \usage{
 tflash_kron(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
   mixcompdist = "normal", nullweight = 10, print_update = FALSE,
-  start = c("first_sv", "random"))
+  start = c("first_sv", "random"), known_modes = NULL,
+  known_factors = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -34,6 +35,13 @@ far along the optimization is?}
 \item{start}{How should we choose the starting values? Either using
 the first singular vector along each mode (\code{"first_sv"})
 or randomly (\code{"random"}).}
+
+\item{known_modes}{A vector of integers. The modes that are
+known. Should be the same length as \code{known_factors}.}
+
+\item{known_factors}{A list of known factors for the modes
+indicated in \code{known_modes}. Defaults to \code{NULL}, where
+all factors are assumed to be unknown.}
 }
 \description{
 Tensor FLASH assuming a diagonal Kronecker structured covariance model.

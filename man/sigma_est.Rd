@@ -11,9 +11,9 @@ sigma_est(sigmae2_v, sigmae2_true, partype = "constant")
 
 \item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
 
-\item{partype}{parameter type for the variance, 
-"constant" for constant variance, 
-"var_col" for nonconstant variance for column, 
+\item{partype}{parameter type for the variance,
+"constant" for constant variance,
+"var_col" for nonconstant variance for column,
 "known" for the kown variance,
 "Bayes_var" for Bayes version of the nonconstant variance for row and column
 "loganova" is anova estiamtion for the log residual square}
