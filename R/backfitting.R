@@ -91,14 +91,11 @@ backfitting = function(Y,intial_list, maxiter_bf=100,
       L2est[,k] = r_flash$l2
       F2est[,k] = r_flash$f2
       sigmae2_out[k] = r_flash$sigmae2
-      priorpost = r_flash$obj - r_flash$c_lik_val
+      priorpost = r_flash$obj_val - r_flash$c_lik_val
       priorpost_vec[k] = priorpost
       clik = r_flash$c_lik_val
       obj_lik = clik + sum(priorpost_vec)
       track_obj = c(track_obj,obj_lik)
-      # print(obj_lik)
-      # print(priorpost_vec)
-      # print(sqrt(mean((Y - Lest %*% t(Fest) -E)^2)) / sqrt(mean((Y - E)^2)))
     }
     #sigmae2_out = sigmae2_out/K
     # print(sigmae2_out)
