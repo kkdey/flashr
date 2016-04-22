@@ -45,7 +45,7 @@
 tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                     mixcompdist = "normal", var_type = c("homoscedastic", "kronecker"),
                     nullweight = 1, print_update = FALSE, known_factors = NULL,
-                    known_modes = NULL) {
+                    known_modes = NULL, homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
     factor_list <- list()
@@ -123,7 +123,8 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
                                       beta = beta, mixcompdist = mixcompdist,
                                       nullweight = nullweight, print_update = print_update,
                                       known_factors = current_known_factors,
-                                      known_modes = current_known_modes)
+                                      known_modes = current_known_modes,
+                                      homo_modes = homo_modes)
             for(mode_index in 1:n) {
                 if(rank_index > 1) {
                     sigma_est[[mode_index]] <- cbind(sigma_est[[mode_index]],
@@ -206,7 +207,8 @@ tgreedy <- function(Y, k = max(dim(Y)), tol = 10^-5, itermax = 100, alpha = 0, b
 tbackfitting <- function(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 10^-6,
                          maxiter_vem = 100, var_type = c("homoscedastic", "kronecker"),
                          mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10,
-                         known_factors = NULL, known_modes = NULL, tol_r1 = 10 ^ -3) {
+                         known_factors = NULL, known_modes = NULL,
+                         homo_modes = NULL, tol_r1 = 10 ^ -3) {
     p <- dim(Y)
     n <- length(p)
     factor_list <- lapply(factor_list, change_to_mat)
@@ -293,7 +295,7 @@ tbackfitting <- function(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 1
                                      mixcompdist = mixcompdist, nullweight = nullweight,
                                      known_factors = current_known_factors,
                                      known_modes = current_known_modes,
-                                     tol = tol_r1)
+                                     tol = tol_r1, homo_modes = homo_modes)
                 sigma_est <- replace_factors(factor_list = sigma_est,
                                              new_factors = t_out$sigma_est,
                                              k = factor_index)

@@ -9,7 +9,7 @@
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                         mixcompdist = "normal", nullweight = 10, print_update = FALSE,
                         start = c("first_sv", "random"), known_modes = NULL,
-                        known_factors = NULL) {
+                        known_factors = NULL, homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
 
@@ -26,9 +26,16 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         which_na <- NULL
     }
 
+    if (is.null(homo_modes)) {
+        hetero_modes <- 1:n
+    } else {
+        hetero_modes <- (1:n)[-homo_modes]
+    }
+
     init_return <- tinit_kron_components(Y = Y, which_na = which_na, start = start,
                                          known_factors = known_factors,
-                                         known_modes = known_modes)
+                                         known_modes = known_modes,
+                                         homo_modes = homo_modes)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_list <- init_return$ex2_list # list of expected value of x^2
     esig_list <- init_return$esig_list
@@ -47,38 +54,46 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     iter_index <- 1
     err <- tol + 1
     not_all_zero <- TRUE
+
     while (iter_index <= itermax & err > tol) {
         esig_list_old <- esig_list
-        for (mode_index in unknown_modes) {
-            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
-                ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
-                not_all_zero <- FALSE
-                break
-            }
 
-            t_out <- tupdate_kron_modek(Y = Y, ex_list = ex_list, ex2_list = ex2_list,
-                                        esig_list = esig_list, k = mode_index,
-                                        mixcompdist = mixcompdist, which_na = which_na,
-                                        nullweight = nullweight)
-            ex_list <- t_out$ex_list
-            ex2_list <- t_out$ex2_list
-            prob_zero[[mode_index]] <- t_out$prob_zero
-            pi0vec[mode_index] <- t_out$pi0
+        for (mode_index in 1:n) {
+            ## update mean
+            if (mode_index %in% unknown_modes) {
+                if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
+                    ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+                    not_all_zero <- FALSE
+                    break
+                }
+                
+                t_out <- tupdate_kron_modek(Y = Y, ex_list = ex_list, ex2_list = ex2_list,
+                                            esig_list = esig_list, k = mode_index,
+                                            mixcompdist = mixcompdist, which_na = which_na,
+                                            nullweight = nullweight)
+                ex_list <- t_out$ex_list
+                ex2_list <- t_out$ex2_list
+                prob_zero[[mode_index]] <- t_out$prob_zero
+                pi0vec[mode_index] <- t_out$pi0
+                
+                if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
+                    ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+                    not_all_zero <- FALSE
+                    break
+                }
+            }
             
-            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
-                ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
-                not_all_zero <- FALSE
-                break
+            ## update variance
+            if (mode_index %in% hetero_modes) {
+                post_rate[[mode_index]] <- tupdate_kron_sig(Y = Y, ex_list = ex_list,
+                                                            ex2_list = ex2_list,
+                                                            esig_list = esig_list,
+                                                            k = mode_index, beta = beta,
+                                                            which_na = which_na)
+                esig_list[[mode_index]] <- post_shape[[mode_index]] / post_rate[[mode_index]]
             }
-
-
-            post_rate[[mode_index]] <- tupdate_kron_sig(Y = Y, ex_list = ex_list,
-                                                        ex2_list = ex2_list,
-                                                        esig_list = esig_list,
-                                                        k = mode_index, beta = beta,
-                                                        which_na = which_na)
-            esig_list[[mode_index]] <- post_shape[[mode_index]] / post_rate[[mode_index]]
         }
+        
         ## if(not_all_zero) {
         ##     max_ex <- sapply(ex_list, function(x) { max(abs(x)) })
         ##     if (max(outer(max_ex, max_ex, "/")) > 10^4)
@@ -88,10 +103,12 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         ##     }
         ## }
         ## esig_list <- rescale_factors(esig_list)
+        
         iter_index <- iter_index + 1
 
+        ## calculate stopping criterion
         err <- 0
-        for (sig_mode_index in 1:n) {
+        for (sig_mode_index in hetero_modes) {
             old_scaled <- esig_list_old[[sig_mode_index]] /
                 sqrt(sum(esig_list_old[[sig_mode_index]] ^ 2))
             new_scaled <- esig_list[[sig_mode_index]] /
@@ -231,7 +248,8 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #' @author David Gerard
 #'
 tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random"),
-                                  known_factors = NULL, known_modes = NULL) {
+                                  known_factors = NULL, known_modes = NULL,
+                                  homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
 
@@ -288,7 +306,7 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
 
     ## huberized initial sigma est
     R <- Y - form_mean(ex_list)
-    esig_list <- diag_mle(R)
+    esig_list <- diag_mle(R, homo_modes = homo_modes)
 
     ## If want to run a few iterations of updating sig
     ## itermax <- 10
@@ -312,7 +330,9 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
 #' @param itermax A positive integer. The maximium number of
 #'     iterations to perform.
 #' @param tol A positive numeric. The stopping criterion.
-#' 
+#' @param homo_modes  A vector of integers. If \code{var_type =
+#'     "kronecker"} then \code{homo_modes} indicates which modes are
+#'     assumed to be homoscedastic.
 #' 
 #' 
 #' 
@@ -322,19 +342,31 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
 #' @author David Gerard
 #' 
 #' @export
-diag_mle <- function(R, itermax = 100, tol = 10^-3) {
+diag_mle <- function(R, itermax = 100, tol = 10^-3, homo_modes = NULL) {
     p <- dim(R)
     n <- length(p)
+
+    if (is.null(homo_modes)) {
+        hetero_modes <- 1:n
+    } else {
+        hetero_modes <- (1:n)[-homo_modes]
+    }
     
     ## huberized initial sigma est
     resid2 <- R ^ 2
     esig_list <- list()
-    for(mode_index in 1:n) {
+    for(mode_index in hetero_modes) {
         z <- apply(resid2, mode_index, mean)
         quants <- quantile(z, c(0.25, 0.75))
         z[z > quants[2]] <- quants[2]
         z[z < quants[1]] <- quants[1]
         esig_list[[mode_index]] <- z
+    }
+
+    if (!is.null(homo_modes)) {
+        for(mode_index in homo_modes) {
+            esig_list[[mode_index]] <- rep(1, length = p[mode_index])
+        }
     }
     naive_est <- rescale_factors(esig_list)
 
@@ -345,7 +377,7 @@ diag_mle <- function(R, itermax = 100, tol = 10^-3) {
     while(err > tol & iter_index < itermax) {
         esig_list_old <- esig_list
         
-        for(mode_index in 1:n) {
+        for(mode_index in hetero_modes) {
             esig_list <-
         temp <-         mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
         }
