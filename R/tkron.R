@@ -26,7 +26,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         which_na <- NULL
     }
 
-    init_return <- tinit_kron_components(Y, which_na = which_na, start = start,
+    init_return <- tinit_kron_components(Y = Y, which_na = which_na, start = start,
                                          known_factors = known_factors,
                                          known_modes = known_modes)
     ex_list <- init_return$ex_list # list of expected value of components.
@@ -181,7 +181,7 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
     
     for (a_index in (1:n)[-k]) {
         AM <- sqrt(esig_list[[a_index]]) * tensr::mat(A, a_index)
-        AMA <- array(AM, dim = c(p[k], p[-k]))
+        AMA <- array(AM, dim = c(p[a_index], p[-a_index]))
         A <- aperm(AMA, match(1:n, c(a_index, (1:n)[-a_index])))
     }
     a <- rowSums(tensr::mat(A, k) ^ 2)
@@ -234,12 +234,6 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
                                   known_factors = NULL, known_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
-
-    if (is.null(known_modes)) {
-        unknown_modes <- 1:n
-    } else {
-        unknown_modes <- (1:n)[-known_modes]
-    }
 
     start <- match.arg(start, c("first_sv", "random"))
     
@@ -336,21 +330,24 @@ diag_mle <- function(R, itermax = 100, tol = 10^-3) {
     resid2 <- R ^ 2
     esig_list <- list()
     for(mode_index in 1:n) {
-        x <- apply(resid2, mode_index, mean)
-        quants <- quantile(x, c(0.25, 0.75))
-        x[x > quants[2]] <- quants[2]
-        x[x < quants[1]] <- quants[1]
-        esig_list[[mode_index]] <- x
+        z <- apply(resid2, mode_index, mean)
+        quants <- quantile(z, c(0.25, 0.75))
+        z[z > quants[2]] <- quants[2]
+        z[z < quants[1]] <- quants[1]
+        esig_list[[mode_index]] <- z
     }
     naive_est <- rescale_factors(esig_list)
 
     ## Now run MLE algorithm
     err <- tol + 1
+
     iter_index <- 1
     while(err > tol & iter_index < itermax) {
         esig_list_old <- esig_list
+        
         for(mode_index in 1:n) {
-            esig_list <- mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
+            esig_list <-
+        temp <-         mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
         }
         esig_list <- rescale_factors(esig_list)
         iter_index <- iter_index + 1
@@ -381,7 +378,7 @@ mle_update_modek <- function(R, esig_list, k) {
     A <- R
     for (a_index in (1:n)[-k]) {
         AM <- (1 / sqrt(esig_list[[a_index]])) * tensr::mat(A, a_index)
-        AMA <- array(AM, dim = c(p[k], p[-k]))
+        AMA <- array(AM, dim = c(p[a_index], p[-a_index]))
         A <- aperm(AMA, match(1:n, c(a_index, (1:n)[-a_index])))
     }
     a <- rowSums(tensr::mat(A, k) ^ 2)
