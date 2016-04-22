@@ -2,8 +2,8 @@ library(flashr)
 context("Known Factors")
 
 test_that("tflash returns known factors when given known factors",{
-    set.seed(231)
-    p <- c(11, 13, 17)
+    set.seed(233)
+    p <- c(11, 13, 29)
 
     E <- array(rnorm(prod(p)), dim = p)
     X <- rnorm(p[1])
@@ -17,6 +17,10 @@ test_that("tflash returns known factors when given known factors",{
     tout <- tflash(Y = Y, known_factors = list(X, beta1), known_modes = c(1, 2))
     expect_equal(X, tout$post_mean[[1]])
     expect_equal(beta1, tout$post_mean[[2]])
+
+    tout <- tflash(Y = Y, known_factors = list(X), known_modes = c(1),
+                   var_type = "kronecker")
+    expect_equal(X, tout$post_mean[[1]])
 }
 )
 

@@ -32,7 +32,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_list <- init_return$ex2_list # list of expected value of x^2
     esig_list <- init_return$esig_list
-
+    
     post_rate <- list()
     post_shape <- list()
     for(mode_index in 1:n) {

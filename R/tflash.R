@@ -75,7 +75,8 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
         flash_out <- tflash_kron(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
                                  nullweight = nullweight, print_update = print_update,
-                                 start = start)
+                                 start = start, known_factors = known_factors,
+                                 known_modes = known_modes)
     }
 
     return(flash_out)
