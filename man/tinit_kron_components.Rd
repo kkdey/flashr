@@ -5,7 +5,7 @@
 \title{Obtain initial estimates of each mode's components.}
 \usage{
 tinit_kron_components(Y, which_na = NULL, start = c("first_sv", "random"),
-  known_factors = NULL, known_modes = NULL)
+  known_factors = NULL, known_modes = NULL, homo_modes = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -24,6 +24,10 @@ all factors are assumed to be unknown.}
 
 \item{known_modes}{A vector of integers. The modes that are
 known. Should be the same length as \code{known_factors}.}
+
+\item{homo_modes}{A vector of integers. If \code{var_type =
+"kronecker"} then \code{homo_modes} indicates which modes are
+assumed to be homoscedastic.}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected

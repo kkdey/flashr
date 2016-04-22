@@ -8,7 +8,7 @@ tflash(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
   itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
   sig_start_itermax = 10, nullweight = 10, print_update = FALSE,
   start = c("first_sv", "random"), known_factors = NULL,
-  known_modes = NULL)
+  known_modes = NULL, homo_modes = NULL)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -51,6 +51,10 @@ all factors are assumed to be unknown.}
 
 \item{known_modes}{A vector of integers. The modes that are
 known. Should be the same length as \code{known_factors}.}
+
+\item{homo_modes}{A vector of integers. If \code{var_type =
+"kronecker"} then \code{homo_modes} indicates which modes are
+assumed to be homoscedastic.}
 }
 \description{
 Fits a rank-1 tensor mean model with a homoscedastic error term. It

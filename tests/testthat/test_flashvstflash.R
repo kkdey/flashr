@@ -35,7 +35,7 @@ test_that("greedy and tgreedy give same results", {
     E <- matrix(rnorm(n * p), nrow = n)
     Y <- Theta + E
 
-    fout <- flashr::greedy(Y, K = 10)
+    trash <- capture.output(fout <- flashr::greedy(Y, K = 10))
     tout <- flashr::tgreedy(Y, k = 10)
 
     fl1scale <- fout$l[,1] / sqrt(sum(fout$l[,1] ^ 2))

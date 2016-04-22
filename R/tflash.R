@@ -34,7 +34,9 @@
 #'     all factors are assumed to be unknown.
 #' @param known_modes A vector of integers. The modes that are
 #'     known. Should be the same length as \code{known_factors}.
-#'
+#' @param homo_modes A vector of integers. If \code{var_type =
+#'     "kronecker"} then \code{homo_modes} indicates which modes are
+#'     assumed to be homoscedastic.
 #'
 #'
 #' @author David Gerard
@@ -44,7 +46,7 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
                    itermax = 100, alpha = 0, beta = 0, mixcompdist = "normal",
                    sig_start_itermax = 10, nullweight = 10, print_update = FALSE,
                    start = c("first_sv", "random"), known_factors = NULL,
-                   known_modes = NULL) {
+                   known_modes = NULL, homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
 
@@ -75,7 +77,8 @@ tflash <- function(Y, var_type = c("homoscedastic", "kronecker"), tol = 10^-5,
         flash_out <- tflash_kron(Y = Y, tol = tol, itermax = itermax, alpha = alpha,
                                  beta = beta, mixcompdist = mixcompdist,
                                  nullweight = nullweight, print_update = print_update,
-                                 start = start)
+                                 start = start, known_factors = known_factors,
+                                 known_modes = known_modes, homo_modes = homo_modes)
     }
 
     return(flash_out)

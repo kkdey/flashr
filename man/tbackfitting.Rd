@@ -7,7 +7,8 @@
 tbackfitting(Y, factor_list, sigma_est, maxiter_bf = 100, tol_bf = 10^-6,
   maxiter_vem = 100, var_type = c("homoscedastic", "kronecker"),
   mixcompdist = "normal", alpha = 0, beta = 0, nullweight = 10,
-  known_factors = NULL, known_modes = NULL)
+  known_factors = NULL, known_modes = NULL, homo_modes = NULL,
+  tol_r1 = 10^-3)
 }
 \arguments{
 \item{Y}{An array of numerics. The data.}
@@ -54,6 +55,13 @@ all factors are assumed to be unknown.}
 
 \item{known_modes}{A vector of integers. The modes that are
 known. Should be the same length as \code{known_factors}.}
+
+\item{homo_modes}{A vector of integers. If \code{var_type =
+"kronecker"} then \code{homo_modes} indicates which modes are
+assumed to be homoscedastic.}
+
+\item{tol_r1}{A positive numeric. The tolerance for the rank 1 runs
+of tflash.}
 }
 \description{
 Perform backfitting starting at output of \code{tgreedy}.
