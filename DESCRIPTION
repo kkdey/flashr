@@ -17,9 +17,10 @@ Description: Fits low-rank matrix and tensor mean models using
              is available for refined estimation.
 License: GPL-3
 LazyData: TRUE
-Imports: ashr,
+Imports: ashr, 
     irlba,
     tensr
+Remotes: github::stephens999/ashr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
 Suggests: knitr,
