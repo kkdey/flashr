@@ -24,4 +24,5 @@ Remotes: github::stephens999/ashr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
 Suggests: knitr,
-    testthat
+    testthat,
+    rmarkdown
