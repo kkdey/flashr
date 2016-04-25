@@ -8,9 +8,16 @@
 #' @author David Gerard
 tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
                         mixcompdist = "normal", nullweight = 10, print_update = FALSE,
-                        start = c("first_sv", "random")) {
+                        start = c("first_sv", "random"), known_modes = NULL,
+                        known_factors = NULL, homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+    }
 
     start <- match.arg(start, c("first_sv", "random"))
 
@@ -19,11 +26,20 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         which_na <- NULL
     }
 
-    init_return <- tinit_kron_components(Y, which_na = which_na, start = start)
+    if (is.null(homo_modes)) {
+        hetero_modes <- 1:n
+    } else {
+        hetero_modes <- (1:n)[-homo_modes]
+    }
+
+    init_return <- tinit_kron_components(Y = Y, which_na = which_na, start = start,
+                                         known_factors = known_factors,
+                                         known_modes = known_modes,
+                                         homo_modes = homo_modes)
     ex_list <- init_return$ex_list # list of expected value of components.
     ex2_list <- init_return$ex2_list # list of expected value of x^2
     esig_list <- init_return$esig_list
-
+    
     post_rate <- list()
     post_shape <- list()
     for(mode_index in 1:n) {
@@ -33,41 +49,51 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
 
 
     prob_zero <- list()
+    pi0vec <- rep(NA, length = n)
     
     iter_index <- 1
     err <- tol + 1
     not_all_zero <- TRUE
+
     while (iter_index <= itermax & err > tol) {
         esig_list_old <- esig_list
+
         for (mode_index in 1:n) {
-            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
-                ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
-                not_all_zero <- FALSE
-                break
+            ## update mean
+            if (mode_index %in% unknown_modes) {
+                if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
+                    ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+                    not_all_zero <- FALSE
+                    break
+                }
+                
+                t_out <- tupdate_kron_modek(Y = Y, ex_list = ex_list, ex2_list = ex2_list,
+                                            esig_list = esig_list, k = mode_index,
+                                            mixcompdist = mixcompdist, which_na = which_na,
+                                            nullweight = nullweight)
+                ex_list <- t_out$ex_list
+                ex2_list <- t_out$ex2_list
+                prob_zero[[mode_index]] <- t_out$prob_zero
+                pi0vec[mode_index] <- t_out$pi0
+                
+                if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
+                    ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
+                    not_all_zero <- FALSE
+                    break
+                }
             }
-
-            t_out <- tupdate_kron_modek(Y = Y, ex_list = ex_list, ex2_list = ex2_list,
-                                        esig_list = esig_list, k = mode_index,
-                                        mixcompdist = mixcompdist, which_na = which_na,
-                                        nullweight = nullweight)
-            ex_list <- t_out$ex_list
-            ex2_list <- t_out$ex2_list
-            prob_zero[[mode_index]] <- t_out$prob_zero
             
-            if(sum(abs(ex_list[[mode_index]])) < 10^-6) {
-                ex_list <- lapply(ex_list, FUN = function(x) { rep(0, length = length(x)) })
-                not_all_zero <- FALSE
-                break
+            ## update variance
+            if (mode_index %in% hetero_modes) {
+                post_rate[[mode_index]] <- tupdate_kron_sig(Y = Y, ex_list = ex_list,
+                                                            ex2_list = ex2_list,
+                                                            esig_list = esig_list,
+                                                            k = mode_index, beta = beta,
+                                                            which_na = which_na)
+                esig_list[[mode_index]] <- post_shape[[mode_index]] / post_rate[[mode_index]]
             }
-
-
-            post_rate[[mode_index]] <- tupdate_kron_sig(Y = Y, ex_list = ex_list,
-                                                        ex2_list = ex2_list,
-                                                        esig_list = esig_list,
-                                                        k = mode_index, beta = beta,
-                                                        which_na = which_na)
-            esig_list[[mode_index]] <- post_shape[[mode_index]] / post_rate[[mode_index]]
         }
+        
         ## if(not_all_zero) {
         ##     max_ex <- sapply(ex_list, function(x) { max(abs(x)) })
         ##     if (max(outer(max_ex, max_ex, "/")) > 10^4)
@@ -77,10 +103,12 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         ##     }
         ## }
         ## esig_list <- rescale_factors(esig_list)
+        
         iter_index <- iter_index + 1
 
+        ## calculate stopping criterion
         err <- 0
-        for (sig_mode_index in 1:n) {
+        for (sig_mode_index in hetero_modes) {
             old_scaled <- esig_list_old[[sig_mode_index]] /
                 sqrt(sum(esig_list_old[[sig_mode_index]] ^ 2))
             new_scaled <- esig_list[[sig_mode_index]] /
@@ -94,6 +122,7 @@ tflash_kron <- function(Y, tol = 10^-5, itermax = 100, alpha = 0, beta = 0,
         }
     }
     return(list(post_mean = ex_list, sigma_est = esig_list, prob_zero = prob_zero,
+                pi0vec = pi0vec,
                 num_iter = iter_index))
 }
 
@@ -138,8 +167,10 @@ tupdate_kron_modek <- function(Y, ex_list, ex2_list, esig_list, k,
     ex2_list[[k]] <- post_mean ^ 2 + post_sd ^ 2
 
     prob_zero <- ATM$ZeroProb
+    pi0 <- ATM$fitted.g$pi[1]
 
-    return(list(ex_list = ex_list, ex2_list = ex2_list, prob_zero = prob_zero))
+    return(list(ex_list = ex_list, ex2_list = ex2_list, prob_zero = prob_zero,
+                pi0 = pi0))
 }
 
 #' Update the kth mode diagional Kronecker structured covariance
@@ -167,7 +198,7 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
     
     for (a_index in (1:n)[-k]) {
         AM <- sqrt(esig_list[[a_index]]) * tensr::mat(A, a_index)
-        AMA <- array(AM, dim = c(p[k], p[-k]))
+        AMA <- array(AM, dim = c(p[a_index], p[-a_index]))
         A <- aperm(AMA, match(1:n, c(a_index, (1:n)[-a_index])))
     }
     a <- rowSums(tensr::mat(A, k) ^ 2)
@@ -202,7 +233,7 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #'
 #'
 #'
-#' @param Y An array of numerics.
+#' @inheritParams tflash
 #' @param which_na Either NULL or an array the same dimension as
 #'     \code{Y} indicating if an element of \code{Y} is missing
 #'     (\code{TRUE}) or observed (\code{FALSE}).
@@ -216,7 +247,9 @@ tupdate_kron_sig <- function(Y, ex_list, ex2_list, esig_list, k, beta = 0, which
 #'
 #' @author David Gerard
 #'
-tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random")) {
+tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "random"),
+                                  known_factors = NULL, known_modes = NULL,
+                                  homo_modes = NULL) {
     p <- dim(Y)
     n <- length(p)
 
@@ -227,8 +260,22 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
     }
     
     x <- vector(mode = "list", length = n)
+
+    if (is.null(known_modes)) {
+        unknown_modes <- 1:n
+    } else {
+        unknown_modes <- (1:n)[-known_modes]
+        known_f_index <- 1
+        for(k in known_modes) {
+            x[[k]] <- known_factors[[known_f_index]]
+            known_f_index <- known_f_index + 1
+        }
+    }
+    
+
+    
     if (start == "first_sv") {
-        for(k in 1:n) {
+        for(k in unknown_modes) {
             sv_out <- tryCatch(irlba::irlba(tensr::mat(Y, k), nv = 0, nu = 1),
                                error = function(){"do_full"})
             if (identical(sv_out, "do_full")) {
@@ -237,23 +284,29 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
             x[[k]] <-  c(sv_out$u) * sign(c(sv_out$u)[1]) ## for identifiability reasons
         }
     } else if (start == "random") {
-        for (k in 1:n) {
+        for (k in unknown_modes) {
             x[[k]] <- rnorm(p[k])
             x[[k]] <- x[[k]] / sqrt(sum(x[[k]] ^ 2))
         }
     }
     d1 <- as.numeric(tensr::atrans(Y, lapply(x, t)))
     if (d1 < 0) {
-        x[[1]] <- x[[1]] * -1
+        x[[min(unknown_modes)]] <- x[[min(unknown_modes)]] * -1
         d1 <- abs(d1)
     }
-    ex_list <- lapply(x, FUN = function(x, xmult) { x * xmult }, xmult = d1 ^ (1 / n))
+
+    ## scale the unknown factors
+    ex_list <- x
+    xmult <- d1 ^ (1 / length(unknown_modes))
+    for (mode_index in unknown_modes) {
+        ex_list[[mode_index]] <- x[[mode_index]] * xmult
+    }
 
     ex2_list <- lapply(ex_list, FUN = function(x) { x ^ 2 })
 
     ## huberized initial sigma est
     R <- Y - form_mean(ex_list)
-    esig_list <- diag_mle(R)
+    esig_list <- diag_mle(R, homo_modes = homo_modes)
 
     ## If want to run a few iterations of updating sig
     ## itermax <- 10
@@ -277,7 +330,9 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
 #' @param itermax A positive integer. The maximium number of
 #'     iterations to perform.
 #' @param tol A positive numeric. The stopping criterion.
-#' 
+#' @param homo_modes  A vector of integers. If \code{var_type =
+#'     "kronecker"} then \code{homo_modes} indicates which modes are
+#'     assumed to be homoscedastic.
 #' 
 #' 
 #' 
@@ -287,29 +342,44 @@ tinit_kron_components <- function(Y, which_na = NULL, start = c("first_sv", "ran
 #' @author David Gerard
 #' 
 #' @export
-diag_mle <- function(R, itermax = 100, tol = 10^-3) {
+diag_mle <- function(R, itermax = 100, tol = 10^-3, homo_modes = NULL) {
     p <- dim(R)
     n <- length(p)
+
+    if (is.null(homo_modes)) {
+        hetero_modes <- 1:n
+    } else {
+        hetero_modes <- (1:n)[-homo_modes]
+    }
     
     ## huberized initial sigma est
     resid2 <- R ^ 2
     esig_list <- list()
-    for(mode_index in 1:n) {
-        x <- apply(resid2, mode_index, mean)
-        quants <- quantile(x, c(0.25, 0.75))
-        x[x > quants[2]] <- quants[2]
-        x[x < quants[1]] <- quants[1]
-        esig_list[[mode_index]] <- x
+    for(mode_index in hetero_modes) {
+        z <- apply(resid2, mode_index, mean)
+        quants <- quantile(z, c(0.25, 0.75))
+        z[z > quants[2]] <- quants[2]
+        z[z < quants[1]] <- quants[1]
+        esig_list[[mode_index]] <- z
+    }
+
+    if (!is.null(homo_modes)) {
+        for(mode_index in homo_modes) {
+            esig_list[[mode_index]] <- rep(1, length = p[mode_index])
+        }
     }
     naive_est <- rescale_factors(esig_list)
 
     ## Now run MLE algorithm
     err <- tol + 1
+
     iter_index <- 1
     while(err > tol & iter_index < itermax) {
         esig_list_old <- esig_list
-        for(mode_index in 1:n) {
-            esig_list <- mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
+        
+        for(mode_index in hetero_modes) {
+            esig_list <-
+        temp <-         mle_update_modek(R = R, esig_list = esig_list, k = mode_index)
         }
         esig_list <- rescale_factors(esig_list)
         iter_index <- iter_index + 1
@@ -340,7 +410,7 @@ mle_update_modek <- function(R, esig_list, k) {
     A <- R
     for (a_index in (1:n)[-k]) {
         AM <- (1 / sqrt(esig_list[[a_index]])) * tensr::mat(A, a_index)
-        AMA <- array(AM, dim = c(p[k], p[-k]))
+        AMA <- array(AM, dim = c(p[a_index], p[-a_index]))
         A <- aperm(AMA, match(1:n, c(a_index, (1:n)[-a_index])))
     }
     a <- rowSums(tensr::mat(A, k) ^ 2)

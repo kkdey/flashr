@@ -4,14 +4,30 @@
 \alias{tinit_kron_components}
 \title{Obtain initial estimates of each mode's components.}
 \usage{
-tinit_kron_components(Y, which_na = NULL, start = c("first_sv", "random"))
+tinit_kron_components(Y, which_na = NULL, start = c("first_sv", "random"),
+  known_factors = NULL, known_modes = NULL, homo_modes = NULL)
 }
 \arguments{
-\item{Y}{An array of numerics.}
+\item{Y}{An array of numerics. The data.}
 
 \item{which_na}{Either NULL or an array the same dimension as
 \code{Y} indicating if an element of \code{Y} is missing
 (\code{TRUE}) or observed (\code{FALSE}).}
+
+\item{start}{How should we choose the starting values? Either using
+the first singular vector along each mode (\code{"first_sv"})
+or randomly (\code{"random"}).}
+
+\item{known_factors}{A list of known factors for the modes
+indicated in \code{known_modes}. Defaults to \code{NULL}, where
+all factors are assumed to be unknown.}
+
+\item{known_modes}{A vector of integers. The modes that are
+known. Should be the same length as \code{known_factors}.}
+
+\item{homo_modes}{A vector of integers. If \code{var_type =
+"kronecker"} then \code{homo_modes} indicates which modes are
+assumed to be homoscedastic.}
 }
 \value{
 \code{ex_list} A list of vectors of the starting expected

@@ -1,19 +1,18 @@
 ---
-title: "flash"
-author: "Wei Wang <<weidong@uchicago.edu>>,  Matthew Stephens <<mstephens@uchicago.edu>> "
+title: "Vignette Title"
+author: "Vignette Author"
 date: "`r Sys.Date()`"
-# bibliography: flashr.bib
-output:
-  rmarkdown::html_vignette:
-    toc: true
-    number_sections: true
+output: rmarkdown::html_vignette
 vignette: >
+  %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteIndexEntry{flashr}
+  %\VignetteEncoding{UTF-8}
 ---
 
-One example for flash and how to use greedy and backfitting. For the speed, I just use backfitting with few runs of flash in each iteration. I also compare with PMD, these are all better than PMD.
+## Abstract
+We provide one example for using FLASH, and implementing the greedy and backfitting algorithms. For the speed, we will just just run the backfitting algorithm with a few runs of FLASH during each iteration. We demonstrate that FLASH performs competitively against a positive matrix decomposition (PMD).
 
+## Simulations
 ```{r,message=FALSE,warning=FALSE}
 library("flashr")
 sim_K = function(K, N, P, SF, SL, signal,noise){
@@ -47,7 +46,8 @@ E = data$Error
 svdl = svd(Y)$u
 svdf = svd(Y)$v
 svdd = svd(Y)$d
-plot(svdd)
+plot(svdd, type = "h", ylim = c(0, max(svdd)), xlab = "Singular Value", ylab = "Value",
+     main = "Scree Plot of the Singular Values")
 svdK = 10
 sqrt(mean(((Y  - svdl[,1:svdK]%*% diag(svdd[1:svdK]) %*% t(svdf[,1:svdK]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
 #sqrt(mean(((Y  - svdd[1] * svdl[,1] %*%  t(svdf[,1]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
@@ -65,12 +65,12 @@ for(i in 1:length(eigenvalue)){
 eigenvalue = eigenvalue / sqrt(mean(Y^2))
 plot(eigenvalue)
 
-
-gback = backfitting(Y,gl,gf, maxiter_r1 = 10)
-gbl = gback$l
-gbf = gback$f
-dim(gbl)
-sqrt(mean(((Y  - gbl%*%t(gbf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
+## backfitting is broken
+##gback = backfitting(Y,gl,gf, maxiter_r1 = 10)
+##gbl = gback$l
+##gbf = gback$f
+##dim(gbl)
+##sqrt(mean(((Y  - gbl%*%t(gbf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
 ```
 
 The comparing criterion is 
