@@ -28,7 +28,9 @@
 #' g = greedy(Y,10)
 #'
 
-greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
+greedy = function(Y,K,flash_para = list(),
+                  plugin = FALSE,
+                  gvalue = c("lik","eigen")){
   N = dim(Y)[1]
   P = dim(Y)[2]
   # match the input parameter
@@ -49,7 +51,7 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
   residual = Y
   flash_default$Y = residual
   # update the input parameters for flash
-  flash_para = modifyList(flash_default,flash_para)
+  flash_para = modifyList(flash_default,flash_para,keep.null = TRUE)
   # this is the first rank one decomposition
   r_flash = do.call(flash,flash_para)
   # get the parameters and the gvalue which is for tracking the factors
@@ -76,10 +78,13 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
     # restore the mean and second moment into fl_list
     flash_para$fl_list$El = L_out
     flash_para$fl_list$Ef = F_out
-    flash_para$fl_list$El2 = L2_out
-    flash_para$fl_list$Ef2 = F2_out
-    # flash_para$fl_list$El2 = L_out^2
-    # flash_para$fl_list$Ef2 = F_out^2
+    if(plugin == TRUE){
+      flash_para$fl_list$El2 = L_out^2
+      flash_para$fl_list$Ef2 = F_out^2
+    }else{
+      flash_para$fl_list$El2 = L2_out
+      flash_para$fl_list$Ef2 = F2_out
+    }
     #get the new residual
     residual = residual - l_temp %*% t(f_temp)
     #itreation for the rank K-1
@@ -116,10 +121,13 @@ greedy = function(Y,K,flash_para = list(), gvalue = c("lik","eigen")){
         # restore the mean and second moment into fl_list
         flash_para$fl_list$El = L_out
         flash_para$fl_list$Ef = F_out
-        flash_para$fl_list$El2 = L2_out
-        flash_para$fl_list$Ef2 = F2_out
-        # flash_para$fl_list$El2 = L_out^2
-        # flash_para$fl_list$Ef2 = F_out^2
+        if(plugin == TRUE){
+          flash_para$fl_list$El2 = L_out^2
+          flash_para$fl_list$Ef2 = F_out^2
+        }else{
+          flash_para$fl_list$El2 = L2_out
+          flash_para$fl_list$Ef2 = F2_out
+        }
       }
       # for loop can control the number of the factors if needed
     }

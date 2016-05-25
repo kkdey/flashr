@@ -100,31 +100,36 @@ ATM_r1 = function(Y, Ef, Ef2,
 #'
 # two parts for the likelihood
 Fval = function(mat,fit_g){
-  prior_pi = fit_g$pi
-  nonzeroindex = which(prior_pi!=0)
-  prior_var = (fit_g$sd[nonzeroindex])^2
-  prior_pi = prior_pi[nonzeroindex]
-
+  # make sure the first row included in the index
+  nonzeroindex = unique(c(1,which(fit_g$pi != 0)))
+  #prepare for the posterior part
   mat_postmean = mat$comp_postmean[nonzeroindex,]
   mat_postmean2 = mat$comp_postmean2[nonzeroindex,]
-  mat_postprob = mat$comp_postprob[nonzeroindex,]
   mat_postvar = mat_postmean2 - mat_postmean^2
-  dimension = dim(mat_postmean)
-  K = dimension[1]
-  N = dimension[2]
-  mat_priorprob = matrix(rep(prior_pi,N),ncol = N)
+  mat_postprob = mat$comp_postprob[nonzeroindex,]
+  # figure our the dimension 
+  K = dim(mat_postprob)[1]
+  N = dim(mat_postprob)[2]
+  if(is.vector(mat_postprob)){
+    K = 1
+    N = length(mat_postprob)
+  }
+  # prepare for the prior
+  prior_pi = fit_g$pi[nonzeroindex]
+  prior_var = (fit_g$sd[nonzeroindex])^2
   mat_priorvar = matrix(rep(prior_var,N),ncol = N)
-  probodds = log(mat_priorprob/mat_postprob)
-  #log(mat_priorprob) - log(mat_postprob)
-  varodds = log(mat_priorvar/mat_postvar)
-  varodds[1,] = 0
-  likodds = mat_postmean2/mat_priorvar
-  likodds[1,] = 0
-  # here mat_postprob might be equal to zero, so 0 * inf should be equal to zero
-  PrioPost = mat_postprob*(probodds - (1/2)*varodds - (1/2)*likodds )
-  # PrioPost[which(mat_postprob ==0 )] = 0
-  PrioPost[which(mat_postprob< 1e-100 )] = 0
-  return(list(PrioPost = sum(PrioPost) ))
+  mat_priorprob = matrix(rep(prior_pi,N),ncol = N)
+  # to get the value
+  varodds = mat_priorvar / mat_postvar
+  varodds[1,] = 1 # deal with 0/0
+  probodds = mat_priorprob / mat_postprob
+  ssrodds = mat_postmean2 / mat_priorvar
+  ssrodds[1,] = 1  # deal with 0/0 
+  priorpost = mat_postprob * (log(probodds) - (1/2)*log(varodds) - (1/2)* (ssrodds -1))
+  # in case of mat_postprob = 0
+  priorpost[which(mat_postprob< 1e-100)] = 0
+  PrioPost = sum(priorpost)
+  return(list(PrioPost = PrioPost))
 }
 
 #' title conditional likelihood
@@ -149,9 +154,9 @@ C_likelihood = function(N,P,sigmae2_v,sigmae2_true){
   } else {
     # change the format to fit the conditional likelihood and accelerate the computation.
     sigmae2_v = mean(sigmae2_v)
-    # c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
+    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) )
     # here I want to use fully variantional inference Elogsigmae2 rather logEsigmae2
-    c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) + log(N*P/2) - digamma(N*P/2))
+    # c_lik = -(N*P)/2 * ( log(2*pi*sigmae2_true) + (sigmae2_v)/(sigmae2_true) + log(N*P/2) - digamma(N*P/2) )
   }
   return(list(c_lik = c_lik))
 }

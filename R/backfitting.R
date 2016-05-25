@@ -3,10 +3,14 @@
 #' Correct the factor and loading matrix estimates using backfitting algorithm
 #'
 #' @param Y is the data matrix (N by P)
-#' @param intial_list is the list from intial_list algorithm
+#' @param initial_list is the list from initial_list algorithm
 #' @param Fest is estimate for f to correct
 #' @param maxiter_bf maximum number of iterations
 #' @param flash_parais the list for flash parameters setting up
+#' @param initial_list initial list for the starting value which contains
+#' l,f,l2,f2
+#' priorpost_vec
+#' clik_vec
 #' @param  gvalue is for output of the backfit,
 #' "eigen" means just provide the sum of square
 #' "lik" mean provide the lowerbound
@@ -27,10 +31,10 @@
 #' N = 100
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = intial_list(Y,K = 10)
+#' g = initial_list(Y,K = 10)
 #' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
-backfitting = function(Y,intial_list, maxiter_bf=100,
+backfitting = function(Y,initial_list, maxiter_bf=100,
                        flash_para = list(), gvalue = c("lik","eigen")){
   epsilon = 1
   tau = 1
@@ -52,30 +56,32 @@ backfitting = function(Y,intial_list, maxiter_bf=100,
   }
   # this is never used but just a initail value
   flash_default$Y = Y
-  flash_para = modifyList(flash_default,flash_para)
+  flash_para = modifyList(flash_default,flash_para, keep.null = TRUE)
   #initial check
-  if(is.vector(intial_list$l)){intial_list$l = matrix(intial_list$l,ncol=1)}
-  if(is.vector(intial_list$f)){intial_list$f = matrix(intial_list$f,ncol=1)}
-  if(nrow(intial_list$l)!=nrow(Y)){stop("L of wrong dimension for Y")}
-  if(nrow(intial_list$f)!=ncol(Y)){stop("F of wrong dimension for Y")}
+  if(is.vector(initial_list$l)){initial_list$l = matrix(initial_list$l,ncol=1)}
+  if(is.vector(initial_list$f)){initial_list$f = matrix(initial_list$f,ncol=1)}
+  if(nrow(initial_list$l)!=nrow(Y)){stop("L of wrong dimension for Y")}
+  if(nrow(initial_list$f)!=ncol(Y)){stop("F of wrong dimension for Y")}
   # now we need to specify the fl_list for each
-  # at first we put all the result from intial_list into the Lest Fest
-  Lest = intial_list$l
-  Fest = intial_list$f
-  L2est = intial_list$l2
-  F2est = intial_list$f2
-  priorpost_vec = intial_list$priorpost_vec
-  # print((sum(priorpost_vec) + intial_list$clik_vec[length(intial_list$clik_vec)]))
+  # at first we put all the result from initial_list into the Lest Fest
+  Lest = initial_list$l
+  Fest = initial_list$f
+  L2est = initial_list$l2
+  F2est = initial_list$f2
+  priorpost_vec = initial_list$priorpost_vec
+  # print((sum(priorpost_vec) + initial_list$clik_vec[length(initial_list$clik_vec)]))
   # print(priorpost_vec)
   # track the obj value
-  track_obj = c((sum(priorpost_vec) + intial_list$clik_vec[length(intial_list$clik_vec)]))
+  obj_lik = (sum(priorpost_vec) + initial_list$clik_vec[length(initial_list$clik_vec)])
+  track_obj = c(obj_lik)
   # in the begining we have all the factors storing in the fl_list
   while(epsilon>1e-5 & tau < maxiter_bf){
     tau = tau + 1
     K = dim(Lest)[2]
     if(K==0){break} #tests for case where all factors disappear!
     # this one can be put out of the while loop
-    preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
+    # preRMSfl = sqrt(mean((Lest %*% t(Fest))^2))
+    pre_obj_lik = obj_lik
     sigmae2_out = rep(0,K)
     for(k in 1:K){
       residual = Y - Lest[,-k] %*% t(Fest[,-k])
@@ -98,7 +104,7 @@ backfitting = function(Y,intial_list, maxiter_bf=100,
       track_obj = c(track_obj,obj_lik)
     }
     #sigmae2_out = sigmae2_out/K
-    # print(sigmae2_out)
+    print(sigmae2_out)
     # remove the zero in the l and f
     # zeros = is_zero_factor(Lest) || is_zero_factor(Fest)  #this is wrong
     zeros = is_zero_factor(Lest)
@@ -107,8 +113,8 @@ backfitting = function(Y,intial_list, maxiter_bf=100,
     L2est = L2est[,!zeros,drop=FALSE]
     F2est = F2est[,!zeros,drop=FALSE]
     priorpost_vec = priorpost_vec[!zeros,drop = FALSE]
-    RMSfl = sqrt(mean((Lest %*% t(Fest))^2))
-    epsilon = abs(preRMSfl - RMSfl)
+    # RMSfl = sqrt(mean((Lest %*% t(Fest))^2))
+    epsilon = abs(obj_lik - pre_obj_lik)
   }
   return(list(l = Lest, f = Fest , sigmae2 = sigmae2_out,track_obj = track_obj))
 }
