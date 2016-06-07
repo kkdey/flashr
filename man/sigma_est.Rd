@@ -4,19 +4,21 @@
 \alias{sigma_est}
 \title{title module for estiamtion of the variance structure}
 \usage{
-sigma_est(sigmae2_v, sigmae2_true, partype = "constant")
+sigma_est(sigmae2_v, sigmae2_true, sigmae2_pre = NA, partype = "constant")
 }
 \arguments{
 \item{sigmae2_v}{residual matrix}
 
-\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
+\item{sigmae2_true}{true variance structure}
+
+\item{sigmae2_pre}{the previouse sigmae2 which is only used in Bayes_var}
 
 \item{partype}{parameter type for the variance,
 "constant" for constant variance,
 "var_col" for nonconstant variance for column,
 "known" for the kown variance,
 "Bayes_var" for Bayes version of the nonconstant variance for row and column
-"loganova" is anova estiamtion for the log residual square}
+"noisy" is anova estiamtion for the log residual square}
 }
 \value{
 sigmae2 estimated variance structure

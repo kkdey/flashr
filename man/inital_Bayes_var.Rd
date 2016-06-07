@@ -8,8 +8,6 @@ inital_Bayes_var(sigmae2_v)
 }
 \arguments{
 \item{sigmae2_v}{residual matrix}
-
-\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
 }
 \value{
 sig2_out estimated variance structure

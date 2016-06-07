@@ -4,7 +4,7 @@
 \alias{obj}
 \title{title objective function in VEM}
 \usage{
-obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype = "margin_lik")
+obj(N, P, sigmae2_v, sigmae2, par_f, par_l, objtype = "margin_lik")
 }
 \arguments{
 \item{N}{dimension of residual matrix}
@@ -13,8 +13,6 @@ obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype = "margin_lik")
 
 \item{sigmae2_v}{residual matrix}
 
-\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
-
 \item{par_f}{ash output for f}
 
 \item{par_l}{ash output for l}
@@ -22,6 +20,8 @@ obj(N, P, sigmae2_v, sigmae2_true, par_f, par_l, objtype = "margin_lik")
 \item{objtype}{objective function type,
 "margin_lik" for conditional likelihood,
 "lowerbound_lik" for full objective function}
+
+\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
 }
 \value{
 obj_val value of the objectice function

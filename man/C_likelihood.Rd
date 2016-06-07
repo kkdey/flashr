@@ -4,7 +4,7 @@
 \alias{C_likelihood}
 \title{title conditional likelihood}
 \usage{
-C_likelihood(N, P, sigmae2_v, sigmae2_true)
+C_likelihood(N, P, sigmae2_v, sigmae2)
 }
 \arguments{
 \item{N}{dimension of residual matrix}
@@ -13,7 +13,7 @@ C_likelihood(N, P, sigmae2_v, sigmae2_true)
 
 \item{sigmae2_v}{residual matrix}
 
-\item{sigmae2_true}{true variance structure (we use the estimated one to replace that if the truth is unknown)}
+\item{sigmae2}{variance structure of error}
 }
 \value{
 c_lik for the onditional likelihood in objectice function

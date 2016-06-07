@@ -5,7 +5,7 @@
 \title{FLASH}
 \usage{
 flash(Y, tol = 1e-05, maxiter_r1 = 500, partype = c("constant", "known",
-  "Bayes_var", "var_col"), sigmae2_true = NA, factor_value = NA,
+  "Bayes_var", "var_col", "noisy"), sigmae2_true = NA, factor_value = NA,
   fix_factor = FALSE, nonnegative = FALSE, objtype = c("margin_lik",
   "lowerbound_lik"), ash_para = list(), fl_list = list())
 }

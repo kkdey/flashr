@@ -13,6 +13,9 @@ vignette: >
 We provide one example for using FLASH, and implementing the greedy and backfitting algorithms. For the speed, we will just just run the backfitting algorithm with a few runs of FLASH during each iteration. We demonstrate that FLASH performs competitively against a positive matrix decomposition (PMD).
 
 ## Simulations
+
+### Rank One FLASH
+
 ```{r,message=FALSE,warning=FALSE}
 library("flashr")
 sim_K = function(K, N, P, SF, SL, signal,noise){
@@ -22,8 +25,8 @@ sim_K = function(K, N, P, SF, SL, signal,noise){
   F_true = array(0, dim = c(P,K))
   
   for(k in 1:K){
-    lstart = rnorm(N, 0, signal)
-    fstart = rnorm(P, 0, signal)
+    lstart = rnorm(N, 0, signal*(k/K))
+    fstart = rnorm(P, 0, signal*(k/K))
     
     index = sample(seq(1:N),(N*SL))
     lstart[index] = 0
@@ -38,57 +41,15 @@ sim_K = function(K, N, P, SF, SL, signal,noise){
   return(list(Y = Y, L_true = L_true, F_true = F_true, Error = E))
 }
 
-data = sim_K(K=10,N=100, P=300, SF = 0.95, SL = 0.8, signal = 1,noise = 1)
-Y = data$Y
-L_true = data$L_true
-F_true = data$F_true
-E = data$Error
-svdl = svd(Y)$u
-svdf = svd(Y)$v
-svdd = svd(Y)$d
-plot(svdd, type = "h", ylim = c(0, max(svdd)), xlab = "Singular Value", ylab = "Value",
-     main = "Scree Plot of the Singular Values")
-svdK = 10
-sqrt(mean(((Y  - svdl[,1:svdK]%*% diag(svdd[1:svdK]) %*% t(svdf[,1:svdK]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
-#sqrt(mean(((Y  - svdd[1] * svdl[,1] %*%  t(svdf[,1]) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
-ggreedy = greedy(Y,K=30)
-# initial gl and gf as svd
-gl = ggreedy$l
-gf = ggreedy$f
-dim(gl)
-sqrt(mean(((Y  - gl%*%t(gf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
-# proportion in 
-eigenvalue = rep(0,dim(gl)[2])
-for(i in 1:length(eigenvalue)){
-  eigenvalue[i] = (sqrt(mean((gl[,i]%*%t(gf[,i]))^2)))
-}
-eigenvalue = eigenvalue / sqrt(mean(Y^2))
-plot(eigenvalue)
 
-## backfitting is broken
-##gback = backfitting(Y,gl,gf, maxiter_r1 = 10)
-##gbl = gback$l
-##gbf = gback$f
-##dim(gbl)
-##sqrt(mean(((Y  - gbl%*%t(gbf) )- E)^2)) / sqrt(mean(((Y - 0)- E)^2))
-```
-
-The comparing criterion is 
-$$\frac{RMSE - RMSE_{opt}}{RMSE_{naive}}$$
-
-If we know the variance, we can do better based on our model.
-
-we can see that if we known the variance matrix, we can do better than using flash with constant variance. I have also compared those with PMD, and the result is flash_hd better then flash which is better then PMD.
-
-```{r,message=FALSE,warning=FALSE}
 sim_hd = function(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0){
-
+  
   E = matrix(rep(0,N*P),nrow=N)
   sig2_true = matrix(rep(0,N*P),nrow=N)
   for(i in 1:N){
     for(j in 1:P){
-      sig2_true[i,j] = mu + a[i] + b[j]
-      E[i,j] = rnorm(1,0,sqrt(mu + a[i] + b[j]))
+      sig2_true[i,j] = mu + a[i] * b[j]
+      E[i,j] = rnorm(1,0,sqrt(mu + a[i] * b[j]))
     }
   }
   
@@ -106,26 +67,130 @@ sim_hd = function(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0){
   
   return(list(Y = Y, L_true = lstart, F_true = fstart, Error = E,sig2_true = sig2_true))
 }
-library("flashr")
+
+```
+
+We have several choices for the variance structure and the factors as well.
+
+Here we provide some example:
+
+#### constant variance 
+
+```{r}
+set.seed(99)
 N = 100
 P = 200
-SF = 0.5
-SL = 0.5
-signal = 1
-data = sim_hd(N, P, SF, SL, signal, a = rchisq(N,3),b = rchisq(P,1),mu = 0)
-sigmae2_true = data$sig2_true
+data = sim_K(K=1,N, P, SF = 0.8, SL = 0.5, signal = 1,noise = 0.5)
 Y = data$Y
 E = data$Error
-ghd = flash_hd(Y,partype = "known",sigmae2 = sigmae2_true)
-l = ghd$l
-f = ghd$f
-sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
-ghd = flash_hd(Y,partype = "constant")
-l = ghd$l
-f = ghd$f
-sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
-gvem = flash_r1(Y)
-l = gvem$l
-f = gvem$f
-sqrt(mean(((Y - l %*% t(f))-E)^2))/sqrt(mean((Y - E)^2))
+
+gf_1 = flash(Y,objtype = "l")
+gf_1$sigmae2
+# fixed factor
+gf_2 = flash(Y,factor_value = data$F_true, fix_factor = TRUE)
+gf_2$sigmae2
+sum(gf_2$f != data$F_true)
+# known variance
+gf_3 = flash(Y,objtype = "l", sigmae2_true = 0.25,partype = "known")
+gf_3$sigmae2
+```
+
+Missing value case
+
+```{r}
+set.seed(99)
+N = 100
+P = 200
+data = sim_K(K=1,N, P, SF = 0.8, SL = 0.5, signal = 1,noise = 0.5)
+Y = data$Y
+Y[1:10,1:10] = NA
+E = data$Error
+
+gf = flash(Y,objtype = "l")
+gf$sigmae2
+```
+
+#### columnwise variance
+
+```{r}
+set.seed(99)
+N = 100
+P = 200
+data = sim_hd(N, P, SF = 0.5, SL=0.5, signal =1, a = rep(1,N), b = rchisq(P,1), mu = 0)
+Y = data$Y
+E = data$Error
+
+gf_1 = flash(Y,objtype = "l", partype = "var_col")
+plot(data$sig2_true[1,], gf_1$sigmae2)
+# fixed factor
+gf_2 = flash(Y, partype = "var_col", factor_value = data$F_true, fix_factor = TRUE)
+sum(gf_2$f != data$F_true)
+plot(data$sig2_true[1,], gf_2$sigmae2)
+# known variance 
+gf_3 = flash(Y,objtype = "l", partype = "known",sigmae2_true = data$sig2_true[1,])
+plot(data$sig2_true[1,], gf_3$sigmae2)
+
+```
+
+#### Kronecker product variance
+
+```{r}
+set.seed(99)
+N = 100
+P = 200
+data = sim_hd(N, P, SF = 0.5, SL=0.5, signal =1, a = rchisq(N,3),b = rchisq(P,1),mu = 0)
+Y = data$Y
+E = data$Error
+
+gf = flash(Y,objtype = "l", partype = "B")
+plot(data$sig2_true,gf$sigmae2)
+```
+
+#### Known variance matrix 
+
+```{r}
+set.seed(99)
+N = 100
+P = 200
+data = sim_hd(N, P, SF = 0.5, SL=0.5, signal =1, a = rchisq(N,3),b = rchisq(P,1),mu = 0)
+Y = data$Y
+E = data$Error
+
+gf = flash(Y,objtype = "l", partype = "known",sigmae2_true = data$sig2_true)
+plot(data$sig2_true,gf$sigmae2)
+```
+
+#### Noisy variance 
+
+```{r}
+set.seed(99)
+N = 100
+P = 200
+data = sim_hd(N, P, SF = 0.5, SL=0.5, signal =1, a = rchisq(N,3),b = rchisq(P,1),mu = 0.9)
+Y = data$Y
+E = data$Error
+
+gf = flash(Y,objtype = "l", partype = "noisy",sigmae2_true = (data$sig2_true - 0.9))
+(gf$sigmae2 - (data$sig2_true - 0.9))[1,1]
+# missing value 
+Y = data$Y
+Y[1:10,1:20] = NA
+gf = flash(Y,objtype = "l", partype = "noisy",sigmae2_true = (data$sig2_true - 0.9))
+(gf$sigmae2 - (data$sig2_true - 0.9))[1,1]
+```
+
+
+### Rank K version 
+
+```{r}
+set.seed(99)
+N = 100
+P = 600
+data = sim_K(K=10,N, P, SF = 0.9, SL = 0.8, signal = 1,noise = 1)
+Y = data$Y
+E = data$Error
+plot(svd(Y)$d)
+ggd = greedy(Y,K = 100)
+#eigen_plot(ggd,sum(Y^2))
+gbf <- backfitting(Y, ggd, maxiter_bf = 50)
 ```

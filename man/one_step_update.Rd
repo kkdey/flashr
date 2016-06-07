@@ -4,7 +4,7 @@
 \alias{one_step_update}
 \title{title one step update in flash iteration using ash}
 \usage{
-one_step_update(Y, El, El2, Ef, Ef2, N, P, sigmae2_v, sigmae2_true,
+one_step_update(Y, El, El2, Ef, Ef2, N, P, sigmae2_v, sigmae2_true, sigmae2,
   nonnegative = FALSE, partype = "constant", objtype = "margin_lik",
   fix_factor = FALSE, ash_para = list(), fl_list = list())
 }
@@ -25,7 +25,11 @@ one_step_update(Y, El, El2, Ef, Ef2, N, P, sigmae2_v, sigmae2_true,
 
 \item{sigmae2_v}{residual square}
 
-\item{sigmae2_true}{estimated value for the variance structure}
+\item{sigmae2_true}{the (true) known variance structure
+Here, sigmae2 is the estimated variance structure in each step
+sigmae2_true is the truth we know, some times sigmae2 is noisy version of sigmae2_true}
+
+\item{sigmae2}{the estimation of the variance structure}
 
 \item{nonnegative}{if the facotor and loading are nonnegative or not.
 TRUE for nonnegative
