@@ -4,7 +4,8 @@
 \alias{greedy}
 \title{Factor Loading Adaptive Shrinkage (K factors version using greedy algorithm)}
 \usage{
-greedy(Y, K, flash_para = list(), gvalue = c("lik", "eigen"))
+greedy(Y, K, flash_para = list(), plugin = FALSE, gvalue = c("lik",
+  "eigen"))
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}

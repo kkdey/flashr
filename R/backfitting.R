@@ -35,7 +35,8 @@
 #' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
 backfitting = function(Y,initial_list, maxiter_bf=100,
-                       flash_para = list(), gvalue = c("lik","eigen")){
+                       flash_para = list(), gvalue = c("lik","eigen"),
+                       parallel = FALSE){
   epsilon = 1
   tau = 1
   N = dim(Y)[1]

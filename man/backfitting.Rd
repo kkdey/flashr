@@ -4,13 +4,13 @@
 \alias{backfitting}
 \title{backfitting to correct K-factor model}
 \usage{
-backfitting(Y, intial_list, maxiter_bf = 100, flash_para = list(),
-  gvalue = c("lik", "eigen"))
+backfitting(Y, initial_list, maxiter_bf = 100, flash_para = list(),
+  gvalue = c("lik", "eigen"), parallel = FALSE)
 }
 \arguments{
 \item{Y}{is the data matrix (N by P)}
 
-\item{intial_list}{is the list from intial_list algorithm}
+\item{initial_list}{is the list from initial_list algorithm}
 
 \item{maxiter_bf}{maximum number of iterations}
 
@@ -21,6 +21,11 @@ backfitting(Y, intial_list, maxiter_bf = 100, flash_para = list(),
 \item{Fest}{is estimate for f to correct}
 
 \item{flash_parais}{the list for flash parameters setting up}
+
+\item{initial_list}{initial list for the starting value which contains
+l,f,l2,f2
+priorpost_vec
+clik_vec}
 }
 \value{
 list of factor, loading and variance of noise matrix
@@ -40,7 +45,7 @@ Repeatedly applies rank 1 algorithm to Y-L[,-i]F[,-i]'
 N = 100
 P = 200
 Y = matrix(rnorm(N*P,0,1),ncol=P)
-g = intial_list(Y,K = 10)
+g = initial_list(Y,K = 10)
 gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 
 }
