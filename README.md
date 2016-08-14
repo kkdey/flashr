@@ -1,11 +1,8 @@
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-flashr
-======
 
 Repo for flashr R package: Factor Loading Adaptive SHrinkage for matrix and tensor data.
 
-Installation
-============
+## Installation
+
 
 To install dependencies, run in R:
 
@@ -27,3 +24,9 @@ devtools::install_github("stephenslab/flashr", auth_token = "xxx")
 where you replace `xxx` with your PAT.
 
 To get help ??flashr
+
+```
+# flashr
+```
+
+Factor Loading with Adaptive Shrinkage in R
