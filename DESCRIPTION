@@ -5,6 +5,7 @@ Version: 0.1.1
 Date: 2016-02-10
 Authors@R: c(person("Wei", "Wang", email = "weiwang@galton.uchicago.edu", role = c("aut", "cre")),
              person("David", "Gerard", email = "dcgerard@uchicago.edu", role = "aut"),
+             person("Kushal", "Dey", email = "kkdey@uchicago.edu", role = "aut"),
              person("Matthew", "Stephens", email = "mstephens@uchicago.edu", role = "aut"))
 Description: Fits low-rank matrix and tensor mean models using
              non-parametric unimodal priors on the components.
@@ -12,14 +13,21 @@ Description: Fits low-rank matrix and tensor mean models using
              flashr will run a variational expectation-maximization
              (VEM) algorithm where the componenets and variances are
              assumed to be separable. For higher-ranks, a greedy algorithm
-             is available where the VEM algorithm is iteratively run on the 
+             is available where the VEM algorithm is iteratively run on the
              residuals of the previous iteration. A backfitting procedure
              is available for refined estimation.
 License: GPL-3
 LazyData: TRUE
-Imports: ashr, 
+LinkingTo: Rcpp,
+           RcppArmadillo
+Depends: Rcpp,
+         RcppArmadillo
+Imports: ashr,
+    Rcpp (>= 0.12.5),
     irlba,
-    tensr
+    tensr,
+    RcppEigen,
+    CountClust
 Remotes: github::stephens999/ashr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr

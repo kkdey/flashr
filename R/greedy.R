@@ -89,7 +89,7 @@ greedy = function(Y,K,flash_para = list(),
     residual = residual - l_temp %*% t(f_temp)
     #itreation for the rank K-1
     for(k in 2:K){
-      print(k)
+      cat("We are at iteration", k, "\n");
       # use the residual as the input of the next flash rank one
       flash_para$Y = residual
       #rank one for residual
@@ -98,7 +98,7 @@ greedy = function(Y,K,flash_para = list(),
       l_temp = r_flash$l
       f_temp = r_flash$f
       # try to output the sigmae2
-      print(r_flash$sigmae2)
+     # print(r_flash$sigmae2)
       # get the new residual
       residual = residual - l_temp %*% t(f_temp)
       #check if we should stop at this iteration
