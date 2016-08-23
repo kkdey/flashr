@@ -6,57 +6,6 @@
 
 using namespace Rcpp;
 
-// ProdVec
-arma::vec ProdVec(arma::rowvec v1, arma::rowvec v2);
-RcppExport SEXP flashr_ProdVec(SEXP v1SEXP, SEXP v2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::rowvec >::type v1(v1SEXP);
-    Rcpp::traits::input_parameter< arma::rowvec >::type v2(v2SEXP);
-    __result = Rcpp::wrap(ProdVec(v1, v2));
-    return __result;
-END_RCPP
-}
-// ProdMat
-arma::mat ProdMat(arma::mat m1, arma::mat m2);
-RcppExport SEXP flashr_ProdMat(SEXP m1SEXP, SEXP m2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type m1(m1SEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type m2(m2SEXP);
-    __result = Rcpp::wrap(ProdMat(m1, m2));
-    return __result;
-END_RCPP
-}
-// ashBuild3
-Rcpp::List ashBuild3(arma::mat Y, arma::vec Ef, arma::mat sigma2_mat);
-RcppExport SEXP flashr_ashBuild3(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2_matSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma2_mat(sigma2_matSEXP);
-    __result = Rcpp::wrap(ashBuild3(Y, Ef, sigma2_mat));
-    return __result;
-END_RCPP
-}
-// ashBuild2
-Rcpp::List ashBuild2(arma::mat Y, arma::vec Ef, arma::vec sigma2_vec, bool isRow);
-RcppExport SEXP flashr_ashBuild2(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2_vecSEXP, SEXP isRowSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type sigma2_vec(sigma2_vecSEXP);
-    Rcpp::traits::input_parameter< bool >::type isRow(isRowSEXP);
-    __result = Rcpp::wrap(ashBuild2(Y, Ef, sigma2_vec, isRow));
-    return __result;
-END_RCPP
-}
 // threadcheck
 int threadcheck(int i);
 RcppExport SEXP flashr_threadcheck(SEXP iSEXP) {
@@ -175,27 +124,31 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// threadcheck
-int threadcheck(int i);
-RcppExport SEXP flashr_threadcheck(SEXP iSEXP) {
+// SigmaV_Est
+arma::mat SigmaV_Est(arma::mat Y, arma::vec El, arma::vec Ef);
+RcppExport SEXP flashr_SigmaV_Est(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    __result = Rcpp::wrap(threadcheck(i));
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
+    __result = Rcpp::wrap(SigmaV_Est(Y, El, Ef));
     return __result;
 END_RCPP
 }
-// calcLik1
-double calcLik1(NumericMatrix sigma2v, NumericVector sigma2_true, int n_threads);
-RcppExport SEXP flashr_calcLik1(SEXP sigma2vSEXP, SEXP sigma2_trueSEXP, SEXP n_threadsSEXP) {
+// SigmaV_Est_2
+arma::mat SigmaV_Est_2(arma::mat Y, arma::vec El, arma::vec Ef, arma::vec El_listed, arma::vec Ef_listed);
+RcppExport SEXP flashr_SigmaV_Est_2(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP, SEXP El_listedSEXP, SEXP Ef_listedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericMatrix >::type sigma2v(sigma2vSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type sigma2_true(sigma2_trueSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    __result = Rcpp::wrap(calcLik1(sigma2v, sigma2_true, n_threads));
+    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type El_listed(El_listedSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type Ef_listed(Ef_listedSEXP);
+    __result = Rcpp::wrap(SigmaV_Est_2(Y, El, Ef, El_listed, Ef_listed));
     return __result;
 END_RCPP
 }
@@ -264,298 +217,6 @@ BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
     __result = Rcpp::wrap(rcpparma_bothproducts(x));
-    return __result;
-END_RCPP
-}
-// threadcheck
-int threadcheck(int i);
-RcppExport SEXP flashr_threadcheck(SEXP iSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    __result = Rcpp::wrap(threadcheck(i));
-    return __result;
-END_RCPP
-}
-// SquaredVec
-arma::vec SquaredVec(arma::vec Efac);
-RcppExport SEXP flashr_SquaredVec(SEXP EfacSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::vec >::type Efac(EfacSEXP);
-    __result = Rcpp::wrap(SquaredVec(Efac));
-    return __result;
-END_RCPP
-}
-// SigmaV_Est
-arma::mat SigmaV_Est(arma::mat Y, arma::vec El, arma::vec Ef);
-RcppExport SEXP flashr_SigmaV_Est(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    __result = Rcpp::wrap(SigmaV_Est(Y, El, Ef));
-    return __result;
-END_RCPP
-}
-// SigmaV_Est_2
-arma::mat SigmaV_Est_2(arma::mat Y, arma::vec El, arma::vec Ef, arma::vec El_listed, arma::vec Ef_listed);
-RcppExport SEXP flashr_SigmaV_Est_2(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP, SEXP El_listedSEXP, SEXP Ef_listedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El_listed(El_listedSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef_listed(Ef_listedSEXP);
-    __result = Rcpp::wrap(SigmaV_Est_2(Y, El, Ef, El_listed, Ef_listed));
-    return __result;
-END_RCPP
-}
-// threadcheck
-int threadcheck(int i);
-RcppExport SEXP flashr_threadcheck(SEXP iSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    __result = Rcpp::wrap(threadcheck(i));
-    return __result;
-END_RCPP
-}
-// SquaredVec
-arma::vec SquaredVec(arma::vec Efac);
-RcppExport SEXP flashr_SquaredVec(SEXP EfacSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::vec >::type Efac(EfacSEXP);
-    __result = Rcpp::wrap(SquaredVec(Efac));
-    return __result;
-END_RCPP
-}
-// twopi
-double twopi();
-RcppExport SEXP flashr_twopi() {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    __result = Rcpp::wrap(twopi());
-    return __result;
-END_RCPP
-}
-// ProdVec
-arma::vec ProdVec(arma::vec E, arma::vec F);
-RcppExport SEXP flashr_ProdVec(SEXP ESEXP, SEXP FSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::vec >::type E(ESEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type F(FSEXP);
-    __result = Rcpp::wrap(ProdVec(E, F));
-    return __result;
-END_RCPP
-}
-// sumFac
-double sumFac(Rcpp::NumericVector E);
-RcppExport SEXP flashr_sumFac(SEXP ESEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type E(ESEXP);
-    __result = Rcpp::wrap(sumFac(E));
-    return __result;
-END_RCPP
-}
-// inv_vec
-Rcpp::NumericVector inv_vec(Rcpp::NumericVector E);
-RcppExport SEXP flashr_inv_vec(SEXP ESEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type E(ESEXP);
-    __result = Rcpp::wrap(inv_vec(E));
-    return __result;
-END_RCPP
-}
-// sebeta_const
-double sebeta_const(double sigmae2, arma::vec E);
-RcppExport SEXP flashr_sebeta_const(SEXP sigmae2SEXP, SEXP ESEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< double >::type sigmae2(sigmae2SEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type E(ESEXP);
-    __result = Rcpp::wrap(sebeta_const(sigmae2, E));
-    return __result;
-END_RCPP
-}
-// vec_to_mat
-SEXP vec_to_mat(SEXP x_);
-RcppExport SEXP flashr_vec_to_mat(SEXP x_SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< SEXP >::type x_(x_SEXP);
-    __result = Rcpp::wrap(vec_to_mat(x_));
-    return __result;
-END_RCPP
-}
-// ashBuildpool
-Rcpp::List ashBuildpool(Rcpp::NumericMatrix Y, Rcpp::NumericVector Ef, arma::mat sigma2, bool isRow);
-RcppExport SEXP flashr_ashBuildpool(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2SEXP, SEXP isRowSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma2(sigma2SEXP);
-    Rcpp::traits::input_parameter< bool >::type isRow(isRowSEXP);
-    __result = Rcpp::wrap(ashBuildpool(Y, Ef, sigma2, isRow));
-    return __result;
-END_RCPP
-}
-// ashBuild1
-Rcpp::List ashBuild1(Rcpp::NumericMatrix Y, Rcpp::NumericVector Ef, double sigma2);
-RcppExport SEXP flashr_ashBuild1(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma2(sigma2SEXP);
-    __result = Rcpp::wrap(ashBuild1(Y, Ef, sigma2));
-    return __result;
-END_RCPP
-}
-// ashBuild2
-Rcpp::List ashBuild2(Rcpp::NumericMatrix Y, Rcpp::NumericVector Ef, Rcpp::NumericVector sigma2_vec, bool isRow);
-RcppExport SEXP flashr_ashBuild2(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2_vecSEXP, SEXP isRowSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type sigma2_vec(sigma2_vecSEXP);
-    Rcpp::traits::input_parameter< bool >::type isRow(isRowSEXP);
-    __result = Rcpp::wrap(ashBuild2(Y, Ef, sigma2_vec, isRow));
-    return __result;
-END_RCPP
-}
-// ashBuild3
-Rcpp::List ashBuild3(arma::mat Y, arma::vec Ef, arma::mat sigma2_mat);
-RcppExport SEXP flashr_ashBuild3(SEXP YSEXP, SEXP EfSEXP, SEXP sigma2_matSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma2_mat(sigma2_matSEXP);
-    __result = Rcpp::wrap(ashBuild3(Y, Ef, sigma2_mat));
-    return __result;
-END_RCPP
-}
-// initval_postprocess1
-Rcpp::List initval_postprocess1(arma::mat Y, Rcpp::NumericVector El, bool nonnegative);
-RcppExport SEXP flashr_initval_postprocess1(SEXP YSEXP, SEXP ElSEXP, SEXP nonnegativeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type El(ElSEXP);
-    Rcpp::traits::input_parameter< bool >::type nonnegative(nonnegativeSEXP);
-    __result = Rcpp::wrap(initval_postprocess1(Y, El, nonnegative));
-    return __result;
-END_RCPP
-}
-// initval_postprocess_fixfactor
-Rcpp::List initval_postprocess_fixfactor(arma::mat Y, arma::vec fixF, bool nonnegative);
-RcppExport SEXP flashr_initval_postprocess_fixfactor(SEXP YSEXP, SEXP fixFSEXP, SEXP nonnegativeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type fixF(fixFSEXP);
-    Rcpp::traits::input_parameter< bool >::type nonnegative(nonnegativeSEXP);
-    __result = Rcpp::wrap(initval_postprocess_fixfactor(Y, fixF, nonnegative));
-    return __result;
-END_RCPP
-}
-// SigmaV_Est
-Rcpp::NumericMatrix SigmaV_Est(arma::mat Y, arma::vec El, arma::vec Ef);
-RcppExport SEXP flashr_SigmaV_Est(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    __result = Rcpp::wrap(SigmaV_Est(Y, El, Ef));
-    return __result;
-END_RCPP
-}
-// SigmaV_Est_2
-Rcpp::NumericMatrix SigmaV_Est_2(arma::mat Y, arma::vec El, arma::vec Ef, arma::vec El_listed, arma::vec Ef_listed);
-RcppExport SEXP flashr_SigmaV_Est_2(SEXP YSEXP, SEXP ElSEXP, SEXP EfSEXP, SEXP El_listedSEXP, SEXP Ef_listedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El(ElSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef(EfSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type El_listed(El_listedSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type Ef_listed(Ef_listedSEXP);
-    __result = Rcpp::wrap(SigmaV_Est_2(Y, El, Ef, El_listed, Ef_listed));
-    return __result;
-END_RCPP
-}
-// calcLik0
-double calcLik0(arma::mat sigma2v, double sigma2_true);
-RcppExport SEXP flashr_calcLik0(SEXP sigma2vSEXP, SEXP sigma2_trueSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type sigma2v(sigma2vSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma2_true(sigma2_trueSEXP);
-    __result = Rcpp::wrap(calcLik0(sigma2v, sigma2_true));
-    return __result;
-END_RCPP
-}
-// mean_mat_rcpp
-double mean_mat_rcpp(arma::mat sigma);
-RcppExport SEXP flashr_mean_mat_rcpp(SEXP sigmaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
-    __result = Rcpp::wrap(mean_mat_rcpp(sigma));
-    return __result;
-END_RCPP
-}
-// rowmeans
-Rcpp::NumericVector rowmeans(Rcpp::NumericMatrix& X);
-RcppExport SEXP flashr_rowmeans(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type X(XSEXP);
-    __result = Rcpp::wrap(rowmeans(X));
-    return __result;
-END_RCPP
-}
-// colmeans
-Rcpp::NumericVector colmeans(Rcpp::NumericMatrix X);
-RcppExport SEXP flashr_colmeans(SEXP XSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type X(XSEXP);
-    __result = Rcpp::wrap(colmeans(X));
     return __result;
 END_RCPP
 }

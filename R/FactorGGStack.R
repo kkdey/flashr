@@ -1,22 +1,27 @@
-#' Absolute Factor Loadings (in FLASH) Struture plot with ggplot2 package
+#' Factor Loadings Stacked Bar chart with ggplot2 package
 #'
-#' Make the traditional Structure histogram plot of absolute loadings from FLASH 
-#' output
+#' Make the Stacked bar chart representation of the factor
+#' loadings obtained from FLASH, PMD, SFA or any factor 
+#' analysis software. The positive loadings are stacked on the positive Y-axis
+#' and the negative loadings are stacked on the negative Y-axis.
 #'
-#' @param loadings Absolute loadings for each sample. Usually a
-#' sample by factors matrix in the FLASH or any factor analysis model output. 
+#'
+#' @param loadings loadings for each sample obtained from a some factor analysis 
+#' method. Usually a sample by factors matrix in the FLASH or any factor 
+#' analysis model output. 
 #' @param annotation A data.frame of two columns: sample_id and label.
 #' sample_id is the unique identifying number of each sample (alphanumeric).
 #' label is a factor of labels, with levels of the factor
-#' arranged in the order of the groups in the Structure (left to right).
+#' arranged in the order of the groups in the stacked bar chart (left to right).
 #' @param palette A vector of colors assigned to the clusters. First color in
 #' the vector is assigned to the cluster labeled as 1, and second color in the
 #' vector is assigned to the cluster labeled as 2, etc. The number of colors
 #' must be the same or greater than the number of clusters. The clusters not
 #' assigned a color are filled with white in the figure. In addition, the
 #' recommended choice of color palette here is RColorBrewer, for instance
-#' RColorBrewer::brewer.pal(8, "Accent") or RColorBrewwer::brewer.pal(9, "Set1").
-#' @param figure_title Title of the plot.
+#' RColorBrewer::brewer.pal(8, "Accent") or 
+#' RColorBrewwer::brewer.pal(9, "Set1").
+#' @param figure_title Title of the plot. Default is NULL
 #' @param yaxis_label Axis label for the samples.
 #' @param order_sample if TRUE, we order samples in each annotation batch
 #' sorted by membership of most representative cluster. If FALSE, we keep
@@ -25,35 +30,43 @@
 #' determines if the ordering due to main cluster is in ascending or descending
 #' order.
 #' @param split_line Control parameters for line splitting the batches in the
-#' plot.
+#' plot. User can control for line width and line color.
+#' @param plot_labels A logical parameter, if TRUE the function plots the axis 
+#' labels.
+#' @param legend_labels The labels of the legend. Defaults to NULL, which will report the 
+#' factor number only.
+#' @param scale If TRUE, each loading vector is scaled by the standard deviation 
+#' across samples in order to ensure all loadings are considered roughly at the 
+#' same scale. If FALSE, the original loadings obtained from the factor analysis 
+#' model output is used.
 #' @param axis_tick Control parameters for x-axis and y-axis tick sizes.
-#' @param plot_labels A logical parameter, if TRUE the function plots the axis labels.
-#'
-#' @return Plots the Structure plot visualization of the absolute values of loadings of 
-#' FLASH model
+#' 
+#' @return Plots the Stacked Bar chart visualization of values of the loadings 
+#' from a factor analysis model.
 #'
 #' @import ggplot2
-#' @importFrom cowplot ggdraw panel_border switch_axis_position plot_grid
+#' @importFrom cowplot ggdraw panel_border switch_axis_position plot_grid  
 #' @import plyr
 #' @import reshape2
 #' @export
 
-FactorGGplot <- function(loadings, annotation,
-                            palette = RColorBrewer::brewer.pal(8, "Accent"),
-                            figure_title = "",
-                            yaxis_label = "Factor Types",
-                            order_sample = TRUE,
-                            sample_order_decreasing = TRUE,
-                            split_line = list(split_lwd = 0.2,
+FactorGGStack <- function(loadings, 
+                          annotation,
+                          palette = RColorBrewer::brewer.pal(9, "Accent"),
+                          figure_title = "",
+                          yaxis_label = "Factor Types",
+                          order_sample = FALSE,
+                          sample_order_decreasing = FALSE,
+                          split_line = list(split_lwd = 0.2,
                                               split_col = "black"),
-                            plot_labels = TRUE,
-                            legend_labels = "",
-                            scale=TRUE,
-                            axis_tick = list(axis_ticks_length = .1,
-                                             axis_ticks_lwd_y = .1,
-                                             axis_ticks_lwd_x = .1,
-                                             axis_label_size = 3,
-                                             axis_label_face = "bold") ) {
+                          plot_labels = TRUE,
+                          legend_labels = "",
+                          scale=TRUE,
+                          axis_tick = list(axis_ticks_length = .1,
+                                           axis_ticks_lwd_y = .1,
+                                           axis_ticks_lwd_x = .1,
+                                           axis_label_size = 3,
+                                           axis_label_face = "bold") ) {
   
   if(scale){
     loadings <- apply(loadings,2,function(x) 
@@ -150,8 +163,12 @@ FactorGGplot <- function(loadings, annotation,
   })
   names(label_breaks) <- label_names
   
-  df_mlt_1 <- subset(df_mlt, value > 0);
-  df_mlt_2 <- subset(df_mlt, value <=0);
+  df_mlt_1 <- df_mlt;
+  df_mlt_1$value[df_mlt_1$value < 0] = 0;
+  
+  
+  df_mlt_2 <- df_mlt;
+  df_mlt_2$value[df_mlt_2$value > 0] = 0;
   
   # make ggplot
   a <- ggplot2::ggplot() +
@@ -177,9 +194,8 @@ FactorGGplot <- function(loadings, annotation,
     ggplot2::coord_flip() +
     geom_bar(data = df_mlt_1, ggplot2::aes(x = document, y = value*1, fill = factor(topic)), stat = "identity") +
     geom_bar(data = df_mlt_2, ggplot2::aes(x = document, y = value*1, fill = factor(topic)), stat = "identity")
-    cowplot::panel_border(remove = TRUE)
-    
-  
+   
+ 
   # width = 1: increase bar width and in turn remove space
   # between bars
  

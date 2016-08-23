@@ -145,3 +145,84 @@ Rcpp::List ashBuild2(Rcpp::NumericMatrix Y, Rcpp::NumericVector Ef, Rcpp::Numeri
                         _["sebetahat"]=sebeta);
   }
 }
+
+
+// [[Rcpp::export]]
+
+arma::mat SigmaV_Est (arma::mat Y, arma::vec El, arma::vec Ef)
+{
+  arma::mat Efmat = arma::mat(Ef);
+  arma::mat Elmat = arma::mat(El);
+  arma::mat Ef2mat = arma::mat(SquaredVec(Ef));
+  arma::mat El2mat = arma::mat(SquaredVec(El));
+  arma::mat res = (Y%Y) - 2*(Y % (Elmat * Efmat.t())) + (El2mat*Ef2mat.t());
+  return (res);
+}
+
+// [[Rcpp::export]]
+
+arma::mat SigmaV_Est_2 (arma::mat Y, arma::vec El, arma::vec Ef,
+                        arma::vec El_listed, arma::vec Ef_listed)
+{
+  arma::mat Efmat = arma::mat(Ef);
+  arma::mat Elmat = arma::mat(El);
+  arma::mat Elmat_listed = arma::mat(El_listed);
+  arma::mat Efmat_listed = arma::mat(Ef_listed);
+
+  arma::mat Ef2mat = arma::mat(SquaredVec(Ef));
+  arma::mat El2mat = arma::mat(SquaredVec(El));
+  arma::mat El2mat_listed = arma::mat(SquaredVec(El_listed));
+  arma::mat Ef2mat_listed = arma::mat(SquaredVec(Ef_listed));
+
+  arma::mat Yhat = Y + Elmat_listed * Efmat_listed.t();
+  arma::mat fl_norm1 = (Elmat*Efmat.t()) + (Elmat_listed * Efmat_listed.t());
+  arma::mat sq_fl_norm1 = fl_norm1 % fl_norm1;
+  //  arma::mat fl_norm2 = El2mat * Ef2mat.t() + El2mat_listed * Ef2mat_listed.t();
+  arma::mat res = (sq_fl_norm1) + (Yhat%Yhat) - 2*(Yhat % ((Elmat * Efmat.t()) + (Elmat_listed * Efmat_listed.t())));
+  return (res);
+}
+
+
+double  calcLik1 (NumericMatrix sigma2v,
+                  NumericVector sigma2_true,
+                  int n_threads)
+{
+  int N = sigma2v.nrow();
+  int P = sigma2v.ncol();
+  NumericVector res(P);
+#pragma omp parallel for num_threads(n_threads)
+  for( int j=0; j < P; j++ ) {
+    res[j] = (-N/2)*((mean(sigma2v.column(j))/sigma2_true[j]) + log(2*M_PI*(sigma2_true[j])));
+  }
+  return(sum(res));
+}
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::export]]
+
+double  calcLik2 (NumericMatrix sigma2v,
+                  NumericMatrix sigma2_true,
+                  int n_threads)
+{
+  //  int N = sigma2v.nrow();
+  int P = sigma2v.ncol();
+  NumericVector outvec(P);
+#pragma omp parallel for num_threads(n_threads)
+  for(int j=0; j<P; j++){
+    outvec[j] = sum(log(2*M_PI*(sigma2_true.column(j)))+ ((sigma2v.column(j))/(sigma2_true.column(j))));
+  }
+  double res = (-0.5)*(sum(outvec));
+  return(res);
+}
+
+// [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::export]]
+double  calcLik0 (NumericMatrix sigma2v, double sigma2_true){
+  int N = sigma2v.nrow();
+  int P = sigma2v.ncol();
+  double mean_globe = (sum(sigma2v)/(N*P));
+  double out = -((N*P)/2) * (log(2*M_PI*sigma2_true) +
+                 (mean_globe)/sigma2_true + log((N*P)/2) - Rf_digamma((N*P)/2));
+  return(out);
+}
+

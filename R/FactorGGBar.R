@@ -1,14 +1,16 @@
-#' Factor Loadings (in FLASH) Multi-panel Struture plot with ggplot2 package
+#' Factor Loadings (in FLASH) Multi-panel grid Bar chart  with ggplot2 package
 #'
-#' Make the multi-panel bar chart plot of loadings from FLASH 
-#' output
+#' Make the multi-panel bar chart plot of loadings from a factor analysis model
+#' output, for e.g. - FLASH, SFA, PMD etc. 
+#' 
 #'
-#' @param loadings loadings for each sample. Usually a
-#' sample by factors matrix in the FLASH or any factor analysis model output. 
+#' @param loadings loadings matrix generated from a factor analysis model. 
+#' Usually a sample by factors matrix in the FLASH or any factor analysis model 
+#' output. 
 #' @param annotation A data.frame of two columns: sample_id and label.
 #' sample_id is the unique identifying number of each sample (alphanumeric).
 #' label is a factor of labels, with levels of the factor
-#' arranged in the order of the labels in the Structure (left to right).
+#' arranged in the order of the labels in the bar chart.
 #' @param palette A vector of colors assigned to the clusters. First color in
 #' the vector is assigned to the cluster labeled as 1, and second color in the
 #' vector is assigned to the cluster labeled as 2, etc. The number of colors
@@ -16,7 +18,7 @@
 #' assigned a color are filled with white in the figure. In addition, the
 #' recommended choice of color palette here is RColorBrewer, for instance
 #' RColorBrewer::brewer.pal(8, "Accent") or RColorBrewwer::brewer.pal(9, "Set1").
-#' @param figure_title Title of the plot.
+#' @param figure_title Title of the plot. Defaults to NULL. 
 #' @param yaxis_label Axis label for the samples.
 #' @param order_sample if TRUE, we order samples in each annotation batch
 #' sorted by membership of most representative cluster. If FALSE, we keep
@@ -25,9 +27,12 @@
 #' determines if the ordering due to main cluster is in ascending or descending
 #' order.
 #' @param split_line Control parameters for line splitting the batches in the
-#' plot.
+#' bar chart.
 #' @param axis_tick Control parameters for x-axis and y-axis tick sizes.
-#' @param plot_labels A logical parameter, if TRUE the function plots the axis labels.
+#' @param fcator_labels The labels of the factors. Deafults to a sequence from 1
+#' to the number of loadings. But user may control the factor_labels depending 
+#' on which loadings he is plotting in the panel.
+#' @param  
 #'
 #' @return Plots the Structure plot visualization of the absolute values of loadings of 
 #' FLASH model
@@ -46,13 +51,14 @@ FactorGGBar <- function(loadings, annotation,
                          figure_title = "",
                          yaxis_label = "Label type",
                          split_line = list(split_lwd = 0.2,
-                                           split_col = "white"),
+                                           split_col = "black"),
                          axis_tick = list(axis_ticks_length = .1,
                                           axis_ticks_lwd_y = .1,
                                           axis_ticks_lwd_x = .1,
                                           axis_label_size = 3,
                                           axis_label_face = "bold"),
                         legend_labels = NULL,
+                        factor_labels = NULL,
                         scale=TRUE,
                         panel=list(panel_rows=2,
                                    panel_title="",
@@ -65,6 +71,10 @@ FactorGGBar <- function(loadings, annotation,
                                       if(sd(x)!=0) {return (x/sd(x))}
                                       else {return (x)}
     })
+  }
+  
+  if(is.null(factor_labels)){
+    factor_labels <- 1:dim(loadings)[2];
   }
   
   if(is.null(legend_labels)){
@@ -82,6 +92,10 @@ FactorGGBar <- function(loadings, annotation,
   
   if(length(legend_labels) != dim(loadings)[2]){
     stop("number of loadings do not match with number of legend labels")
+  }
+  
+  if(length(factor_labels) != dim(loadings)[2]){
+    stop("number of factors do not match with number of factor labels")
   }
   
   # check the annotation data.frame
@@ -141,7 +155,7 @@ FactorGGBar <- function(loadings, annotation,
                      axis.ticks.x = ggplot2::element_line(size = axis_tick$axis_ticks_lwd_x),
                      axis.ticks.length = ggplot2::unit(axis_tick$axis_ticks_length, "cm"),
                      title = ggplot2::element_text(size = 6) ) +
-      ggplot2::ggtitle(paste0("Factor: ", n, legend_labels[n]))  +
+      ggplot2::ggtitle(paste0("Factor: ", factor_labels[n], legend_labels[n]))  +
       # Add label axis labels
       ggplot2::scale_x_discrete(breaks = as.character((levels(df_mlt$document)[round(label_breaks)])),
                                 labels = names(label_breaks))  + geom_bar(stat = "identity",position = "stack",width = 1) + #make the bars
