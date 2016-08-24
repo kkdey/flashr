@@ -19,7 +19,7 @@
 <<knitr, echo=FALSE, results="hide">>=
 library("knitr")
 opts_chunk$set(tidy=FALSE,tidy.opts=list(width.cutoff=30),dev="png",fig.show="hide",
-               fig.width=4,fig.height=7,
+               fig.width=8,fig.height=6,
                message=FALSE)
 @
 
@@ -63,7 +63,7 @@ FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive 
 
 \section{\flashr{} Installation}
 
-\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{irlba}, \CRANpkg{CountClust}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
+\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{irlba}, \CRANpkg{CountClust}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{grid}, \CRANpkg{gridExtra}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
 
 We install the Github version of the package.
 
@@ -122,7 +122,8 @@ ll <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 50,
 We load the FLASH output from the greedy implementation of FLASH and then we process the output.
 
 <<load_flash_output, echo=TRUE, eval=TRUE>>=
-data("flash_deng")
+library(flashr)
+ll_deng <- get(data("flash_deng_ex"))
 @ %def
 
 We postprocess the loadings and the factors from the FLASH output. We calculate the percentage of variance explained by each factor.
@@ -134,18 +135,18 @@ pve_percentage <- c("", paste0(":PVE-", round(postprocess_ll$PVE*100,0), "%"))
 
 We represent the loadings by a stacked barchart of the loadings obtained from the FLASH output. We keep aside the first factor as that represents the mean factor.
 
-<<flash_structure, echo=TRUE, eval=TRUE>>=
+<<flash_structure, eval=TRUE, warning=FALSE, fig.show="asis", dpi=144, fig.width=5, fig.height=7, out.width="5in", out.height="7in">>=
 omega <- ll_deng$l
 
 annotation <- data.frame(
   sample_id = paste0("X", c(1:NROW(omega))),
-  label = factor(meta_data$cell_type,
+  label = factor(deng.meta_data$cell_type,
                         levels = c("zy", "early2cell",
 "mid2cell", "late2cell","4cell", "8cell", "16cell","earlyblast","midblast","lateblast") ) )
 
 rownames(omega) <- annotation$sample_id
 
-FactorGGplot(loadings = omega[,-1],
+FactorGGStack(loadings = omega[,-1],
                 annotation = annotation,
                 palette = c(RColorBrewer::brewer.pal(8, "Accent"),RColorBrewer::brewer.pal(4, "Spectral")),
                 yaxis_label = "Development Phase",
@@ -163,7 +164,7 @@ FactorGGplot(loadings = omega[,-1],
 
 We next look at a multi-grid bar chart representation of the factor loadings.
 
-<<flash_multipanel_grid, echo=TRUE, eval=TRUE>>=
+<<flash_multipanel_grid, eval=TRUE, warning=FALSE, fig.show="asis", dpi=144, fig.width=6, fig.height=6, out.width="6in", out.height="6in">>=
 
 FactorGGBar(loadings = omega,
             annotation = annotation,

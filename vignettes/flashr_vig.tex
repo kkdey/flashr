@@ -8,7 +8,56 @@
 % openPDF('flashr-vig.pdf')
 % !Rnw weave = knitr
 
-\documentclass[12pt]{article}
+\documentclass[12pt]{article}\usepackage[]{graphicx}\usepackage[usenames,dvipsnames]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
 
 \newcommand{\CountClust}{\textit{CountClust}}
 \newcommand{\flashr}{\textit{flashr}}
@@ -26,7 +75,7 @@
 \author{Wei Wang, Kushal K Dey \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
 
 \bioctitle[Factor analysis with Adaptive Shrinkage using \flashr{}]{Factor analysis with Adaptive Shrinkage using \flashr{}}
-
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
 \maketitle
@@ -57,7 +106,7 @@ FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive 
 
 \section{\flashr{} Installation}
 
-\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{irlba}, \CRANpkg{CountClust}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
+\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{irlba}, \CRANpkg{CountClust}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{grid}, \CRANpkg{gridExtra}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
 
 We install the Github version of the package.
 
@@ -137,18 +186,90 @@ We load the FLASH output from the greedy implementation of FLASH and then we pro
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{ll_deng} \hlkwb{<-} \hlkwd{data}\hlstd{(}\hlstr{"flash_deng"}\hlstd{)}
+\hlkwd{library}\hlstd{(flashr)}
+\hlstd{ll_deng} \hlkwb{<-} \hlkwd{get}\hlstd{(}\hlkwd{data}\hlstd{(}\hlstr{"flash_deng_ex"}\hlstd{))}
 \end{alltt}
-
-
-{\ttfamily\noindent\color{warningcolor}{\#\# Warning in data("{}flash\_deng"{}): data set 'flash\_deng' not found}}\end{kframe}
+\end{kframe}
 \end{knitrout}
 
 We postprocess the loadings and the factors from the FLASH output. We calculate the percentage of variance explained by each factor.
 
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{postprocess_ll} \hlkwb{<-} \hlkwd{flash_factor_postprocess}\hlstd{(ll_deng}\hlopt{$}\hlstd{l,ll_deng}\hlopt{$}\hlstd{f, voom_data)}
+\hlstd{pve_percentage} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{""}\hlstd{,} \hlkwd{paste0}\hlstd{(}\hlstr{":PVE-"}\hlstd{,} \hlkwd{round}\hlstd{(postprocess_ll}\hlopt{$}\hlstd{PVE}\hlopt{*}\hlnum{100}\hlstd{,}\hlnum{0}\hlstd{),} \hlstr{"%"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+We represent the loadings by a stacked barchart of the loadings obtained from the FLASH output. We keep aside the first factor as that represents the mean factor.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{omega} \hlkwb{<-} \hlstd{ll_deng}\hlopt{$}\hlstd{l}
+
+\hlstd{annotation} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}
+  \hlkwc{sample_id} \hlstd{=} \hlkwd{paste0}\hlstd{(}\hlstr{"X"}\hlstd{,} \hlkwd{c}\hlstd{(}\hlnum{1}\hlopt{:}\hlkwd{NROW}\hlstd{(omega))),}
+  \hlkwc{label} \hlstd{=} \hlkwd{factor}\hlstd{(deng.meta_data}\hlopt{$}\hlstd{cell_type,}
+                        \hlkwc{levels} \hlstd{=} \hlkwd{c}\hlstd{(}\hlstr{"zy"}\hlstd{,} \hlstr{"early2cell"}\hlstd{,}
+\hlstr{"mid2cell"}\hlstd{,} \hlstr{"late2cell"}\hlstd{,}\hlstr{"4cell"}\hlstd{,} \hlstr{"8cell"}\hlstd{,} \hlstr{"16cell"}\hlstd{,}\hlstr{"earlyblast"}\hlstd{,}\hlstr{"midblast"}\hlstd{,}\hlstr{"lateblast"}\hlstd{) ) )}
+
+\hlkwd{rownames}\hlstd{(omega)} \hlkwb{<-} \hlstd{annotation}\hlopt{$}\hlstd{sample_id}
+
+\hlkwd{FactorGGStack}\hlstd{(}\hlkwc{loadings} \hlstd{= omega[,}\hlopt{-}\hlnum{1}\hlstd{],}
+                \hlkwc{annotation} \hlstd{= annotation,}
+                \hlkwc{palette} \hlstd{=} \hlkwd{c}\hlstd{(RColorBrewer}\hlopt{::}\hlkwd{brewer.pal}\hlstd{(}\hlnum{8}\hlstd{,} \hlstr{"Accent"}\hlstd{),RColorBrewer}\hlopt{::}\hlkwd{brewer.pal}\hlstd{(}\hlnum{4}\hlstd{,} \hlstr{"Spectral"}\hlstd{)),}
+                \hlkwc{yaxis_label} \hlstd{=} \hlstr{"Development Phase"}\hlstd{,}
+                \hlkwc{order_sample} \hlstd{=} \hlnum{TRUE}\hlstd{,}
+                \hlkwc{figure_title} \hlstd{=} \hlstr{"Factor Loadings Structure Plot"}\hlstd{,}
+                \hlkwc{legend_labels} \hlstd{= pve_percentage[}\hlopt{-}\hlnum{1}\hlstd{],}
+                \hlkwc{scale}\hlstd{=}\hlnum{TRUE}\hlstd{,}
+                \hlkwc{axis_tick} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{axis_ticks_length} \hlstd{=} \hlnum{.1}\hlstd{,}
+                                 \hlkwc{axis_ticks_lwd_y} \hlstd{=} \hlnum{.1}\hlstd{,}
+                                 \hlkwc{axis_ticks_lwd_x} \hlstd{=} \hlnum{.1}\hlstd{,}
+                                 \hlkwc{axis_label_size} \hlstd{=} \hlnum{7}\hlstd{,}
+                                 \hlkwc{axis_label_face} \hlstd{=} \hlstr{"bold"}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=5in,height=7in]{figure/flash_structure-1}
+
+\end{knitrout}
+
+We next look at a multi-grid bar chart representation of the factor loadings.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{FactorGGBar}\hlstd{(}\hlkwc{loadings} \hlstd{= omega,}
+            \hlkwc{annotation} \hlstd{= annotation,}
+            \hlkwc{palette} \hlstd{=} \hlkwd{list}\hlstd{(}\hlstr{"mid"}\hlstd{=}\hlstr{"white"}\hlstd{,}
+                           \hlstr{"low"}\hlstd{=}\hlstr{"red"}\hlstd{,}
+                           \hlstr{"high"}\hlstd{=}\hlstr{"blue"}\hlstd{,}
+                           \hlstr{"midpoint"}\hlstd{=}\hlnum{0}\hlstd{),}
+            \hlkwc{yaxis_label} \hlstd{=} \hlstr{"Population Type"}\hlstd{,}
+            \hlkwc{figure_title} \hlstd{=} \hlstr{" "}\hlstd{,}
+            \hlkwc{axis_tick} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{axis_ticks_length} \hlstd{=} \hlnum{.1}\hlstd{,}
+                             \hlkwc{axis_ticks_lwd_y} \hlstd{=} \hlnum{.1}\hlstd{,}
+                             \hlkwc{axis_ticks_lwd_x} \hlstd{=} \hlnum{.1}\hlstd{,}
+                             \hlkwc{axis_label_size} \hlstd{=} \hlnum{7}\hlstd{,}
+                             \hlkwc{axis_label_face} \hlstd{=} \hlstr{"bold"}\hlstd{),}
+            \hlkwc{legend_labels}\hlstd{=pve_percentage,}
+            \hlkwc{scale}\hlstd{=}\hlnum{TRUE}\hlstd{,}
+            \hlkwc{panel}\hlstd{=}\hlkwd{list}\hlstd{(}\hlkwc{panel_rows}\hlstd{=}\hlnum{2}\hlstd{,}
+                       \hlkwc{panel_title}\hlstd{=}\hlstr{"Factor Loadings Bar plot"}\hlstd{,}
+                       \hlkwc{panel_title_fontsize}\hlstd{=}\hlnum{10}\hlstd{,}
+                       \hlkwc{panel_title_font}\hlstd{=}\hlnum{3}\hlstd{))}
+\end{alltt}
+\end{kframe}
+\includegraphics[width=6in,height=6in]{figure/flash_multipanel_grid-1}
+
+\end{knitrout}
 
 
 
 
 
 
+\end{document}
