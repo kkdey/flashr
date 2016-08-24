@@ -7,6 +7,7 @@ Authors@R: c(person("Wei", "Wang", email = "weiwang@galton.uchicago.edu", role =
              person("David", "Gerard", email = "dcgerard@uchicago.edu", role = "aut"),
              person("Kushal", "Dey", email = "kkdey@uchicago.edu", role = "aut"),
              person("Matthew", "Stephens", email = "mstephens@uchicago.edu", role = "aut"))
+Maintainer:  Wei Wang <weiwang@galton.uchicago.edu>
 Description: Fits low-rank matrix and tensor mean models using
              non-parametric unimodal priors on the components.
              For fitting a rank-1 matrix or tensor mean model,
@@ -17,20 +18,29 @@ Description: Fits low-rank matrix and tensor mean models using
              residuals of the previous iteration. A backfitting procedure
              is available for refined estimation.
 License: GPL-3
+URL: https://github.com/kkdey/flashr
 LazyData: TRUE
 LinkingTo: Rcpp,
            RcppArmadillo
 Depends: Rcpp,
-         RcppArmadillo
+         RcppArmadillo,
+         ggplot2 (>= 2.1.0)
 Imports: ashr,
     Rcpp (>= 0.12.5),
     irlba,
     tensr,
     RcppEigen,
-    CountClust
+    CountClust,
+    grid,
+    gridExtra,
+    ggplot2,
+    cowplot,
+    RColorBrewer,
+    devtools
 Remotes: github::stephens999/ashr
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
+biocViews: RNASeq, GeneExpression, FactorAnalysis, Shrinkage, Software, Visualisation
 Suggests: knitr,
     testthat,
     rmarkdown
