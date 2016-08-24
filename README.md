@@ -35,38 +35,10 @@ We load the *flashr* package
 
 ``` r
 library(flashr)
-#> Loading required package: Rcpp
-#> Loading required package: RcppArmadillo
 ```
 
 ``` r
 library(singleCellRNASeqMouseDeng2014)
-#> Loading required package: Biobase
-#> Loading required package: BiocGenerics
-#> Loading required package: parallel
-#> 
-#> Attaching package: 'BiocGenerics'
-#> The following objects are masked from 'package:parallel':
-#> 
-#>     clusterApply, clusterApplyLB, clusterCall, clusterEvalQ,
-#>     clusterExport, clusterMap, parApply, parCapply, parLapply,
-#>     parLapplyLB, parRapply, parSapply, parSapplyLB
-#> The following objects are masked from 'package:stats':
-#> 
-#>     IQR, mad, xtabs
-#> The following objects are masked from 'package:base':
-#> 
-#>     anyDuplicated, append, as.data.frame, as.vector, cbind,
-#>     colnames, do.call, duplicated, eval, evalq, Filter, Find, get,
-#>     grep, grepl, intersect, is.unsorted, lapply, lengths, Map,
-#>     mapply, match, mget, order, paste, pmax, pmax.int, pmin,
-#>     pmin.int, Position, rank, rbind, Reduce, rownames, sapply,
-#>     setdiff, sort, table, tapply, union, unique, unlist, unsplit
-#> Welcome to Bioconductor
-#> 
-#>     Vignettes contain introductory material; view with
-#>     'browseVignettes()'. To cite Bioconductor, see
-#>     'citation("Biobase")', and for packages 'citation("pkgname")'.
 deng.counts <- exprs(Deng2014MouseESC)
 deng.meta_data <- pData(Deng2014MouseESC)
 deng.gene_names <- rownames(deng.counts)
@@ -115,7 +87,7 @@ FactorGGStack(loadings = omega[,-1],
                                  axis_label_face = "bold"))
 ```
 
-<img src="vignettes/figure/flash_structure-1.png" alt="Structure Plot" height="700" width="400">
+<img src="vignettes/figure/flash_structure-1.png" alt="Structure Plot" height="600" width="400">
 
 ``` r
 FactorGGBar(loadings = omega,
@@ -139,7 +111,7 @@ FactorGGBar(loadings = omega,
                        panel_title_font=3))
 ```
 
-<img src="vignettes/figure/flash_multipanel_grid-1.png" alt="Structure Plot" height="700" width="400">
+<img src="vignettes/figure/flash_multipanel_grid-1.png" alt="Structure Plot" height="600" width="700">
 
 The top distinguishing features separating the factors can be extracted as follows
 

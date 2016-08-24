@@ -41,12 +41,12 @@ To get help
 
 We load the *flashr* package
 
-```{r}
+```{r echo=TRUE, eval=TRUE, message=FALSE, warning=FALSE}
 library(flashr)
 ```
 
 
-```{r echo=TRUE, eval=TRUE}
+```{r echo=TRUE, eval=TRUE, message=FALSE,warning=FALSE}
 library(singleCellRNASeqMouseDeng2014)
 deng.counts <- exprs(Deng2014MouseESC)
 deng.meta_data <- pData(Deng2014MouseESC)
@@ -100,7 +100,7 @@ FactorGGStack(loadings = omega[,-1],
                                  axis_label_face = "bold"))
 ```
 
-<img src="vignettes/figure/flash_structure-1.png" alt="Structure Plot" height="700" width="400">
+<img src="vignettes/figure/flash_structure-1.png" alt="Structure Plot" height="600" width="400">
 
 ```{r echo=TRUE, eval=FALSE}
 FactorGGBar(loadings = omega,
@@ -125,7 +125,7 @@ FactorGGBar(loadings = omega,
 ```
 
 
-<img src="vignettes/figure/flash_multipanel_grid-1.png" alt="Structure Plot" height="700" width="400">
+<img src="vignettes/figure/flash_multipanel_grid-1.png" alt="Structure Plot" height="600" width="700">
 
 The top distinguishing features separating the factors can be extracted as follows
 
