@@ -1,0 +1,65 @@
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{Factor Loading using Adaptive Shrinkage using flashr}
+%\VignettePackage{flashr}
+
+% To compile this document
+% library('knitr'); rm(list=ls()); knit('flashr/vignettes/flashr-vig.Rnw')
+% library('knitr'); rm(list=ls()); knit2pdf('flashr/vignettes/flashr-vig.Rnw');
+% openPDF('flashr-vig.pdf')
+% !Rnw weave = knitr
+
+\documentclass[12pt]{article}
+
+\newcommand{\CountClust}{\textit{CountClust}}
+\newcommand{\flashr}{\textit{flashr}}
+\usepackage{dsfont}
+\usepackage{cite}
+
+
+<<knitr, echo=FALSE, results="hide">>=
+library("knitr")
+opts_chunk$set(tidy=FALSE,tidy.opts=list(width.cutoff=30),dev="png",fig.show="hide",
+               fig.width=4,fig.height=7,
+               message=FALSE)
+@
+
+<<style, eval=TRUE, echo=FALSE, results="asis">>=
+BiocStyle::latex()
+@
+
+\author{Wei Wang, Kushal K Dey \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
+
+\bioctitle[Factor analysis with Adaptive Shrinkage using \flashr{}]{Factor analysis with Adaptive Shrinkage using \flashr{}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  \vspace{1em}
+  The \R{} package \flashr{} provides tools to perform factor analysis with adaptive shrinkage on the factor loadings and the factors and also provides means to visualization of the factor analysis results. The adaptive shrinkage is performed using the \textbf{ashr} package due to Stephens (2016).
+
+  The package provides generic functions to visualize loadings data and post processing functions to analyze the factors estimated with focus on sparsity and the proportion of variance in the data explained by each factor. It also provides a list of features that play the key role in distinguishing the factors.
+
+\vspace{1em}
+\textbf{\flashr{} version:} \Sexpr{packageDescription("flashr")$Version} \footnote{This document used the vignette from \Bioconductor{} package \Biocpkg{DESeq2, CountClust} as \CRANpkg{knitr} template}
+
+\end{abstract}
+
+
+<<options, echo=FALSE>>=
+options(digits=3, width=80, prompt=" ", continue=" ")
+@
+
+\newpage
+
+\tableofcontents
+
+\section{Introduction}
+
+FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive shrinkage methods in \textbf{ashr} package due to Stephens (2016) to the domain of factor analysis. An important consideration in any factor analysis scheme are shrinkage and sparsity. There are many algorithms that perform Sparse Factor Analysis (check Engelhardt and Stephens), however determining the level of shrinkage is a challenging task for the user. FLASH solves this problem by adaptively selecting the level of shrinkage for factor loadings and factors.
+
+\flashr{} offers 3 versions of FLASH (\textit{normal}, \textit{greedy} and \textit{backfitting}) to perform factor analysis with adaptive shrinkage. Also, it provides generic visualization tools to view and analyze the factor loadings along with post processing tools to check the proportion of variance explained and sparsity level of the different factors. Finally, it offers functions to select a list of features that drive the factors or play the most key role in distinguishing the features.
+
+
+\end{document}
