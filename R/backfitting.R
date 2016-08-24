@@ -17,7 +17,7 @@
 #'
 #' @details Repeatedly applies rank 1 algorithm to Y-L[,-i]F[,-i]'
 #'
-#' @export backfitting
+#' @export flash.backfitting
 #'
 #' @importFrom ashr ash
 #'
@@ -32,9 +32,9 @@
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
 #' g = initial_list(Y,K = 10)
-#' gb = backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
+#' gb = flash.backfitting(Y,g$l,g$f,maxiter_bf=100,maxiter_r1 = 5)
 #'
-backfitting = function(Y,initial_list, maxiter_bf=100,
+flash.backfitting = function(Y,initial_list, maxiter_bf=100,
                        flash_para = list(), gvalue = c("lik","eigen"),
                        parallel = FALSE){
   epsilon = 1
@@ -45,8 +45,8 @@ backfitting = function(Y,initial_list, maxiter_bf=100,
   gvalue = match.arg(gvalue, c("lik","eigen"))
   # set the default value for flash
   flash_default = list(tol=1e-5, maxiter_r1 = 500,
-                       partype = "constant", 
-                       sigmae2_true = NA, 
+                       partype = "constant",
+                       sigmae2_true = NA,
                        factor_value = NA,fix_factor = FALSE,
                        nonnegative = FALSE,
                        objtype = "margin_lik",

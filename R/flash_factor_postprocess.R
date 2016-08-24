@@ -2,9 +2,9 @@
 #' post-processing the loadings and factors from flash output
 #'
 #' @return sparsity and PVE and big genes
-#'
+#' @export
 
-flash_factor_postprocess <- function(loadings, factors, data){
+flash_factor_postprocess = function(loadings, factors, data){
   PVE <- array(0, (dim(factors)[2]-1));
   sparsity <- array(0, dim(factors)[2])
   big_genes_2 <- array(0, dim(factors)[2])

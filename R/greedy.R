@@ -6,13 +6,13 @@
 #' @param K is the max number of factor user want. the output will provide the actual number of factor
 #'   automaticaly.
 #' @param flash_para is the list for input parameters for flash
-#' @param gvalue is the output style of greedy algorithm, 
+#' @param gvalue is the output style of greedy algorithm,
 #' "lik" provide the lowerbound of loglikelihood
 #' "eigen" provide the sudo eigenvalue for each factor.
 #'
 #' @details greedy algorithm on the residual matrix to get a rank one matrix decomposition
 #'
-#' @export greedy
+#' @export flash.greedy
 #'
 #' @importFrom ashr ash
 #'
@@ -25,10 +25,10 @@
 #' N = 100
 #' P = 200
 #' Y = matrix(rnorm(N*P,0,1),ncol=P)
-#' g = greedy(Y,10)
+#' g = flash.greedy(Y,10)
 #'
 
-greedy = function(Y,K,flash_para = list(),
+flash.greedy = function(Y,K,flash_para = list(),
                   plugin = FALSE,
                   gvalue = c("lik","eigen")){
   N = dim(Y)[1]
@@ -37,8 +37,8 @@ greedy = function(Y,K,flash_para = list(),
   gvalue = match.arg(gvalue, c("lik","eigen"))
   # set the default value for flash
   flash_default = list(tol=1e-5, maxiter_r1 = 500,
-                       partype = "constant", 
-                       sigmae2_true = NA, 
+                       partype = "constant",
+                       sigmae2_true = NA,
                        factor_value = NA,fix_factor = FALSE,
                        nonnegative = FALSE,
                        objtype = "margin_lik",
@@ -115,7 +115,7 @@ greedy = function(Y,K,flash_para = list(),
         # if not go to next step and restore the l and f
         L_out = cbind(L_out,l_temp)
         F_out = cbind(F_out,f_temp)
-        # for second moment 
+        # for second moment
         L2_out = cbind(L2_out,l2_temp)
         F2_out = cbind(F2_out,f2_temp)
         # restore the mean and second moment into fl_list
@@ -137,7 +137,7 @@ greedy = function(Y,K,flash_para = list(),
     colnames(L2_out) = NULL
     colnames(F2_out) = NULL
     return(list(l = L_out,f = F_out,
-                l2 = L2_out, f2 = F2_out, 
+                l2 = L2_out, f2 = F2_out,
                 priorpost_vec = priorpost_vec, clik_vec =clik_vec))
   }
   # no return here, since return before
@@ -152,7 +152,7 @@ greedy = function(Y,K,flash_para = list(),
 #' @param g  greedy object which is a list
 #' @param ssY sum square of Y
 #' @keywords internal
-#' 
+#'
 eigen_plot = function(g,ssY){
   K = dim(g$l)[2]
   eigen_val = rep(0,K)

@@ -2,4 +2,4 @@
 #' on mouse
 #' @format A list of model fit (loadings and factors) for k=10
 #' @return A list of model fit (loadings and factors) for k=10
-"flash_deng"
+"flash_deng_ex"

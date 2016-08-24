@@ -8,56 +8,7 @@
 % openPDF('flashr-vig.pdf')
 % !Rnw weave = knitr
 
-\documentclass[12pt]{article}\usepackage[]{graphicx}\usepackage[usenames,dvipsnames]{color}
-%% maxwidth is the original width if it is less than linewidth
-%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
-\makeatletter
-\def\maxwidth{ %
-  \ifdim\Gin@nat@width>\linewidth
-    \linewidth
-  \else
-    \Gin@nat@width
-  \fi
-}
-\makeatother
-
-\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
-\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
-\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
-\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
-\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
-\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
-\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
-\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
-\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
-\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
-
-\usepackage{framed}
-\makeatletter
-\newenvironment{kframe}{%
- \def\at@end@of@kframe{}%
- \ifinner\ifhmode%
-  \def\at@end@of@kframe{\end{minipage}}%
-  \begin{minipage}{\columnwidth}%
- \fi\fi%
- \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
- \colorbox{shadecolor}{##1}\hskip-\fboxsep
-     % There is no \\@totalrightmargin, so:
-     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
- \MakeFramed {\advance\hsize-\width
-   \@totalleftmargin\z@ \linewidth\hsize
-   \@setminipage}}%
- {\par\unskip\endMakeFramed%
- \at@end@of@kframe}
-\makeatother
-
-\definecolor{shadecolor}{rgb}{.97, .97, .97}
-\definecolor{messagecolor}{rgb}{0, 0, 0}
-\definecolor{warningcolor}{rgb}{1, 0, 1}
-\definecolor{errorcolor}{rgb}{1, 0, 0}
-\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
-
-\usepackage{alltt}
+\documentclass[12pt]{article}
 
 \newcommand{\CountClust}{\textit{CountClust}}
 \newcommand{\flashr}{\textit{flashr}}
@@ -75,7 +26,7 @@
 \author{Wei Wang, Kushal K Dey \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
 
 \bioctitle[Factor analysis with Adaptive Shrinkage using \flashr{}]{Factor analysis with Adaptive Shrinkage using \flashr{}}
-\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
 \begin{document}
 
 \maketitle
@@ -104,5 +55,100 @@ FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive 
 
 \flashr{} offers 3 versions of FLASH (\textit{normal}, \textit{greedy} and \textit{backfitting}) to perform factor analysis with adaptive shrinkage. Also, it provides generic visualization tools to view and analyze the factor loadings along with post processing tools to check the proportion of variance explained and sparsity level of the different factors. Finally, it offers functions to select a list of features that drive the factors or play the most key role in distinguishing the features.
 
+\section{\flashr{} Installation}
 
-\end{document}
+\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{irlba}, \CRANpkg{CountClust}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
+
+We install the Github version of the package.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{devtools}\hlopt{::}\hlkwd{install_github}\hlstd{(}\hlstr{"kkdey/flashr"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(flashr)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\section{Data preparation}
+
+We install a single cell RNA-seq data across mouse embryo developmental stages due to Deng \textit{et al} 2014 \cite{Deng2014}. We load it as an ExpressionSet object.\begin{verb} singleCellRNASeqMouseDeng2014 \end{verb} data package due to Deng \textit{et al} is a processed version of the data publicly available at Gene Expression Omnibus (GEO:GSE45719: see \url{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45719}).
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(devtools)}
+
+\hlstd{read.data1} \hlkwb{=} \hlkwa{function}\hlstd{() \{}
+  \hlstd{x} \hlkwb{=} \hlkwd{tempfile}\hlstd{()}
+  \hlkwd{download.file}\hlstd{(}\hlstr{'https://cdn.rawgit.com/kkdey/singleCellRNASeqMouseDeng2014/master/data/Deng2014MouseEsc.rda'}\hlstd{,} \hlkwc{destfile}\hlstd{=x,} \hlkwc{quiet}\hlstd{=}\hlnum{TRUE}\hlstd{)}
+  \hlstd{z} \hlkwb{=} \hlkwd{get}\hlstd{(}\hlkwd{load}\hlstd{((x)))}
+  \hlkwd{return}\hlstd{(z)}
+\hlstd{\}}
+
+\hlstd{Deng2014MouseESC} \hlkwb{<-} \hlkwd{read.data1}\hlstd{()}
+
+\hlcom{## Alternatively}
+\hlcom{# install_github('kkdey/singleCellRNASeqMouseDeng2014')}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+We load the data
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{deng.counts} \hlkwb{<-} \hlstd{Biobase}\hlopt{::}\hlkwd{exprs}\hlstd{(Deng2014MouseESC)}
+\hlstd{deng.meta_data} \hlkwb{<-} \hlstd{Biobase}\hlopt{::}\hlkwd{pData}\hlstd{(Deng2014MouseESC)}
+\hlstd{deng.gene_names} \hlkwb{<-} \hlkwd{rownames}\hlstd{(deng.counts)}
+
+\hlstd{voom_out} \hlkwb{<-} \hlstd{limma}\hlopt{::}\hlkwd{voom}\hlstd{(deng.counts);}
+\hlstd{voom_weights} \hlkwb{<-} \hlkwd{t}\hlstd{(voom_out}\hlopt{$}\hlstd{weights);}
+\hlstd{voom_data} \hlkwb{<-} \hlkwd{t}\hlstd{(voom_out}\hlopt{$}\hlstd{E);}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+We apply FLASH on the data. We show here example of two versions of FLASH - the normal pooled FLASH on successive residuals and the greedy FLASH. We assume the number of factors to be $K=10$.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ll} \hlkwb{<-} \hlkwd{flash.greedy}\hlstd{(voom_data,} \hlkwc{K}\hlstd{=}\hlnum{10}\hlstd{,} \hlkwc{flash_para} \hlstd{=} \hlkwd{list}\hlstd{(}\hlkwc{tol}\hlstd{=}\hlnum{1e-3}\hlstd{,} \hlkwc{maxiter_r1} \hlstd{=} \hlnum{50}\hlstd{,}
+                \hlkwc{partype}\hlstd{=}\hlstr{"known"}\hlstd{,} \hlkwc{sigmae2_true} \hlstd{= voom_weights,}
+                \hlkwc{nonnegative}\hlstd{=}\hlnum{FALSE}\hlstd{));}
+\hlstd{ll} \hlkwb{<-} \hlkwd{flashpool}\hlstd{(voom_data,} \hlkwc{K}\hlstd{=}\hlnum{10}\hlstd{,} \hlkwc{tol}\hlstd{=}\hlnum{1e-3}\hlstd{,} \hlkwc{maxiter_r1} \hlstd{=} \hlnum{50}\hlstd{,}
+                \hlkwc{partype}\hlstd{=}\hlstr{"known"}\hlstd{,} \hlkwc{sigmae2_true} \hlstd{= voom_weights);}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+We load the FLASH output from the greedy implementation of FLASH and then we process the output.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ll_deng} \hlkwb{<-} \hlkwd{data}\hlstd{(}\hlstr{"flash_deng"}\hlstd{)}
+\end{alltt}
+
+
+{\ttfamily\noindent\color{warningcolor}{\#\# Warning in data("{}flash\_deng"{}): data set 'flash\_deng' not found}}\end{kframe}
+\end{knitrout}
+
+We postprocess the loadings and the factors from the FLASH output. We calculate the percentage of variance explained by each factor.
+
+
+
+
+
+
+

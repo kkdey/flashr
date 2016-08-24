@@ -61,5 +61,135 @@ FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive 
 
 \flashr{} offers 3 versions of FLASH (\textit{normal}, \textit{greedy} and \textit{backfitting}) to perform factor analysis with adaptive shrinkage. Also, it provides generic visualization tools to view and analyze the factor loadings along with post processing tools to check the proportion of variance explained and sparsity level of the different factors. Finally, it offers functions to select a list of features that drive the factors or play the most key role in distinguishing the features.
 
+\section{\flashr{} Installation}
+
+\flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{irlba}, \CRANpkg{CountClust}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
+
+We install the Github version of the package.
+
+<<install_flashr_bio, eval=FALSE>>=
+devtools::install_github("kkdey/flashr")
+@ %def
+
+<<load_flashr_bio, eval=TRUE>>=
+library(flashr)
+@ %def
+
+\section{Data preparation}
+
+We install a single cell RNA-seq data across mouse embryo developmental stages due to Deng \textit{et al} 2014 \cite{Deng2014}. We load it as an ExpressionSet object.\begin{verb} singleCellRNASeqMouseDeng2014 \end{verb} data package due to Deng \textit{et al} is a processed version of the data publicly available at Gene Expression Omnibus (GEO:GSE45719: see \url{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE45719}).
+
+<<data_install_deng, echo=TRUE, eval=TRUE>>=
+library(devtools)
+
+read.data1 = function() {
+  x = tempfile()
+  download.file('https://cdn.rawgit.com/kkdey/singleCellRNASeqMouseDeng2014/master/data/Deng2014MouseEsc.rda', destfile=x, quiet=TRUE)
+  z = get(load((x)))
+  return(z)
+}
+
+Deng2014MouseESC <- read.data1()
+
+## Alternatively
+# install_github('kkdey/singleCellRNASeqMouseDeng2014')
+
+@ %def
+
+We load the data
+
+<<load_deng, echo=TRUE, eval=TRUE>>=
+deng.counts <- Biobase::exprs(Deng2014MouseESC)
+deng.meta_data <- Biobase::pData(Deng2014MouseESC)
+deng.gene_names <- rownames(deng.counts)
+
+voom_out <- limma::voom(deng.counts);
+voom_weights <- t(voom_out$weights);
+voom_data <- t(voom_out$E);
+@ %def
+
+
+We apply FLASH on the data. We show here example of two versions of FLASH - the normal pooled FLASH on successive residuals and the greedy FLASH. We assume the number of factors to be $K=10$.
+
+<<flash_apply, echo=TRUE, eval=FALSE>>=
+ll <- flash.greedy(voom_data, K=10, flash_para = list(tol=1e-3, maxiter_r1 = 50,
+                partype="known", sigmae2_true = voom_weights,
+                nonnegative=FALSE));
+ll <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 50,
+                partype="known", sigmae2_true = voom_weights);
+@ %def
+
+We load the FLASH output from the greedy implementation of FLASH and then we process the output.
+
+<<load_flash_output, echo=TRUE, eval=TRUE>>=
+data("flash_deng")
+@ %def
+
+We postprocess the loadings and the factors from the FLASH output. We calculate the percentage of variance explained by each factor.
+
+<<flash_postprocess, echo=TRUE, eval=TRUE>>=
+postprocess_ll <- flash_factor_postprocess(ll_deng$l,ll_deng$f, voom_data)
+pve_percentage <- c("", paste0(":PVE-", round(postprocess_ll$PVE*100,0), "%"))
+@ %def
+
+We represent the loadings by a stacked barchart of the loadings obtained from the FLASH output. We keep aside the first factor as that represents the mean factor.
+
+<<flash_structure, echo=TRUE, eval=TRUE>>=
+omega <- ll_deng$l
+
+annotation <- data.frame(
+  sample_id = paste0("X", c(1:NROW(omega))),
+  label = factor(meta_data$cell_type,
+                        levels = c("zy", "early2cell",
+"mid2cell", "late2cell","4cell", "8cell", "16cell","earlyblast","midblast","lateblast") ) )
+
+rownames(omega) <- annotation$sample_id
+
+FactorGGplot(loadings = omega[,-1],
+                annotation = annotation,
+                palette = c(RColorBrewer::brewer.pal(8, "Accent"),RColorBrewer::brewer.pal(4, "Spectral")),
+                yaxis_label = "Development Phase",
+                order_sample = TRUE,
+                figure_title = "Factor Loadings Structure Plot",
+                legend_labels = pve_percentage[-1],
+                scale=TRUE,
+                axis_tick = list(axis_ticks_length = .1,
+                                 axis_ticks_lwd_y = .1,
+                                 axis_ticks_lwd_x = .1,
+                                 axis_label_size = 7,
+                                 axis_label_face = "bold"))
+
+@ %def
+
+We next look at a multi-grid bar chart representation of the factor loadings.
+
+<<flash_multipanel_grid, echo=TRUE, eval=TRUE>>=
+
+FactorGGBar(loadings = omega,
+            annotation = annotation,
+            palette = list("mid"="white",
+                           "low"="red",
+                           "high"="blue",
+                           "midpoint"=0),
+            yaxis_label = "Population Type",
+            figure_title = " ",
+            axis_tick = list(axis_ticks_length = .1,
+                             axis_ticks_lwd_y = .1,
+                             axis_ticks_lwd_x = .1,
+                             axis_label_size = 7,
+                             axis_label_face = "bold"),
+            legend_labels=pve_percentage,
+            scale=TRUE,
+            panel=list(panel_rows=2,
+                       panel_title="Factor Loadings Bar plot",
+                       panel_title_fontsize=10,
+                       panel_title_font=3))
+
+@ %def
+
+
+
+
+
 
 \end{document}
