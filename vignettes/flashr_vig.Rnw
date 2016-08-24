@@ -118,10 +118,10 @@ voom_data <- t(voom_out$E);
 We apply FLASH on the data. We show here example of two versions of FLASH - the normal pooled FLASH on successive residuals and the greedy FLASH. We assume the number of factors to be $K=10$.
 
 <<flash_apply, echo=TRUE, eval=FALSE>>=
-ll <- flash.greedy(voom_data, K=10, flash_para = list(tol=1e-3, maxiter_r1 = 50,
+ll_deng <- flash.greedy(voom_data, K=10, flash_para = list(tol=1e-3, maxiter_r1 = 50,
                 partype="known", sigmae2_true = voom_weights,
                 nonnegative=FALSE));
-ll <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 50,
+ll_deng <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 50,
                 partype="known", sigmae2_true = voom_weights);
 @ %def
 
