@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  24 AUG 2016 00:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  24 AUG 2016 00:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -482,12 +482,20 @@ File: figure/flash_multipanel_grid-1.png Graphic file (type png)
 Package pdftex.def Info: figure/flash_multipanel_grid-1.png used on input line 
 266.
 (pdftex.def)             Requested size: 433.61894pt x 433.61894pt.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 275.
+Package color Info: Redefining color shadecolor on input line 274.
  [6 <./figure/flash_multipanel_grid-1.png>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 275.
+Overfull \hbox (147.89133pt too wide) in paragraph at lines 285--285
+[][]\OT1/cmtt/m/n/12 indices[] []<-[] []CountClust[][]::[][]ExtractTopFeatures[
+][](abs_f_scale,[] []top_features[][]=[][]100[][],[] []method[][]=[][]"poisson"
+[][],[] []options[][]=[][]"min"[][])[][] 
+ []
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 331.
+[7]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 331.
  (./flashr_vig.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 275.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 275.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 331.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 331.
 
 
 Package rerunfilecheck Warning: File `flashr_vig.out' has changed.
@@ -503,12 +511,12 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 275.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 331.
  ) 
 Here is how much of TeX's memory you used:
- 6563 strings out of 493117
- 98787 string characters out of 6135433
- 200399 words of memory out of 5000000
+ 6564 strings out of 493117
+ 98793 string characters out of 6135433
+ 200429 words of memory out of 5000000
  9941 multiletter control sequences out of 15000+600000
  13457 words of font info for 47 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -528,10 +536,10 @@ local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></usr
 local/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/lo
 cal/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/loc
 al/texlive/2014/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on flashr_vig.pdf (6 pages, 290533 bytes).
+Output written on flashr_vig.pdf (7 pages, 294362 bytes).
 PDF statistics:
- 118 PDF objects out of 1000 (max. 8388607)
- 90 compressed objects within 1 object stream
- 12 named destinations out of 1000 (max. 500000)
+ 125 PDF objects out of 1000 (max. 8388607)
+ 96 compressed objects within 1 object stream
+ 13 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

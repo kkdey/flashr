@@ -27,7 +27,7 @@ opts_chunk$set(tidy=FALSE,tidy.opts=list(width.cutoff=30),dev="png",fig.show="hi
 BiocStyle::latex()
 @
 
-\author{Wei Wang, Kushal K Dey \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
+\author{Wei Wang, Kushal K Dey, David Gerrard \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
 
 \bioctitle[Factor analysis with Adaptive Shrinkage using \flashr{}]{Factor analysis with Adaptive Shrinkage using \flashr{}}
 
@@ -66,6 +66,12 @@ FLASH (Factor Loadings with Adaptive Shrinkage) is an extension of the adaptive 
 \flashr{} requires the packages \CRANpkg{ashr}, \CRANpkg{ggplot2}, \CRANpkg{irlba}, \CRANpkg{CountClust}, \CRANpkg{cowplot}, \CRANpkg{RColorBrewer}, \CRANpkg{grid}, \CRANpkg{gridExtra}. Also one needs the packages \CRANpkg{devtools}to install the developmental version of the \flashr{} which will be the most up-to-date version.
 
 We install the Github version of the package.
+
+To install dependencies, run in R:
+<<install_dependencies, eval=FALSE>>=
+install.packages(c("irlba", "tensr", "devtools"))
+devtools::install_github("stephens999/ashr", ref = "uni")
+@ %def
 
 <<install_flashr_bio, eval=FALSE>>=
 devtools::install_github("kkdey/flashr")
@@ -187,6 +193,50 @@ FactorGGBar(loadings = omega,
                        panel_title_font=3))
 
 @ %def
+
+
+Annotations of the top gene ontologies of the factors from the FLASH output.
+
+<<gene_annotations, echo=TRUE, eval=TRUE>>=
+ll_f_scale <- apply(ll_deng$f[,-1],2,function(x)
+                                  {
+                                      if(sd(x)!=0) {return (x/sd(x))}
+                                      else {return (x)}
+    })
+
+normalize <- function(x) { return (x/sum(x))}
+
+abs_f_scale <- apply(ll_deng$f[,-1],2,function(x) normalize(abs(x)))
+indices <- CountClust::ExtractTopFeatures(abs_f_scale, top_features=100, method="poisson", options="min")
+imp_features <- apply(indices, c(1,2), function(x) deng.gene_names[x])
+
+imp_features[1:6,1:6]
+
+@ %def
+
+We performed Enrichment Analysis on these important features extracted, the top annotations are reported below.
+
+Factors      |    Gene Ontologies
+
+-----------    ---------------------
+
+ factor 1    |    cell development, neuron projection guidance, stem cell differentiation, mesenchymal cell development, anatomical structure development
+
+ factor 2    |   bounding membrance organelle, protein C-terminus binding, lyosomal membrane
+
+ factor 3    |   nucleolus, nuclear lumen, ribosome assembly, nuclear part, RNA binding, nucleotide binding
+
+ factor 4    |   central nervous system development, cell surface receptor signaling, extracellular space
+
+ factor 5    |   carbon oxygen lyase activity, chromosomal region, regulatory region nucleic acid binding
+
+ factor 6    |   extracellular exosome, extracellular vesicle, extracellular organelle, vesicle
+
+ factor 7    |
+
+ factor 8    |  protein localization to cell periphery, plasma membrane organization
+
+ factor 9    |  sperm-egg recognition, cell-cell recognition, fertilization, regulation of cellular process, substrate-specific transporter activity
 
 
 

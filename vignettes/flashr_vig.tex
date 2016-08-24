@@ -72,7 +72,7 @@
 \AtBeginDocument{\bibliographystyle{/Library/Frameworks/R.framework/Versions/3.3/Resources/library/BiocStyle/resources/tex/unsrturl}}
 
 
-\author{Wei Wang, Kushal K Dey \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
+\author{Wei Wang, Kushal K Dey, David Gerrard \& Matthew Stephens \\[1em] \small{\textit{Stephens Lab}, The University of Chicago} \mbox{ }\\ \small{\texttt{$^*$Correspondending Email: mstephens@uchicago.edu}}}
 
 \bioctitle[Factor analysis with Adaptive Shrinkage using \flashr{}]{Factor analysis with Adaptive Shrinkage using \flashr{}}
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -233,7 +233,7 @@ We represent the loadings by a stacked barchart of the loadings obtained from th
                                  \hlkwc{axis_label_face} \hlstd{=} \hlstr{"bold"}\hlstd{))}
 \end{alltt}
 \end{kframe}
-\includegraphics[width=5in,height=7in]{figure/flash_structure-1}
+\includegraphics[width=5in,height=7in]{figure/flash_structure-1} 
 
 \end{knitrout}
 
@@ -263,9 +263,65 @@ We next look at a multi-grid bar chart representation of the factor loadings.
                        \hlkwc{panel_title_font}\hlstd{=}\hlnum{3}\hlstd{))}
 \end{alltt}
 \end{kframe}
-\includegraphics[width=6in,height=6in]{figure/flash_multipanel_grid-1}
+\includegraphics[width=6in,height=6in]{figure/flash_multipanel_grid-1} 
 
 \end{knitrout}
+
+
+Annotations of the top gene ontologies of the factors from the FLASH output.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ll_f_scale} \hlkwb{<-} \hlkwd{apply}\hlstd{(ll_deng}\hlopt{$}\hlstd{f[,}\hlopt{-}\hlnum{1}\hlstd{],}\hlnum{2}\hlstd{,}\hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)}
+                                  \hlstd{\{}
+                                      \hlkwa{if}\hlstd{(}\hlkwd{sd}\hlstd{(x)}\hlopt{!=}\hlnum{0}\hlstd{) \{}\hlkwd{return} \hlstd{(x}\hlopt{/}\hlkwd{sd}\hlstd{(x))\}}
+                                      \hlkwa{else} \hlstd{\{}\hlkwd{return} \hlstd{(x)\}}
+    \hlstd{\})}
+
+\hlstd{normalize} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) \{} \hlkwd{return} \hlstd{(x}\hlopt{/}\hlkwd{sum}\hlstd{(x))\}}
+
+\hlstd{abs_f_scale} \hlkwb{<-} \hlkwd{apply}\hlstd{(ll_deng}\hlopt{$}\hlstd{f[,}\hlopt{-}\hlnum{1}\hlstd{],}\hlnum{2}\hlstd{,}\hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{normalize}\hlstd{(}\hlkwd{abs}\hlstd{(x)))}
+\hlstd{indices} \hlkwb{<-} \hlstd{CountClust}\hlopt{::}\hlkwd{ExtractTopFeatures}\hlstd{(abs_f_scale,} \hlkwc{top_features}\hlstd{=}\hlnum{100}\hlstd{,} \hlkwc{method}\hlstd{=}\hlstr{"poisson"}\hlstd{,} \hlkwc{options}\hlstd{=}\hlstr{"min"}\hlstd{)}
+\hlstd{imp_features} \hlkwb{<-} \hlkwd{apply}\hlstd{(indices,} \hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,}\hlnum{2}\hlstd{),} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) deng.gene_names[x])}
+
+\hlstd{imp_features[}\hlnum{1}\hlopt{:}\hlnum{6}\hlstd{,}\hlnum{1}\hlopt{:}\hlnum{6}\hlstd{]}
+\end{alltt}
+\begin{verbatim}
+##      [,1]      [,2]     [,3]            [,4]            [,5]     [,6]    
+## [1,] "Kit"     "Dgkk"   "Rnf141"        "Reep2"         "Fam46b" "Ston2" 
+## [2,] "Arl6ip5" "Gm6981" "Aagab"         "Clasp1"        "Top2b"  "Hbs1l" 
+## [3,] "Zfp772"  "Cd34"   "Herc6"         "Atm"           "Wee1"   "Fam64a"
+## [4,] "Ankrd35" "H2-Q10" "1600025M17Rik" "Loxl2"         "H2-T24" "Mmp19" 
+## [5,] "Lpcat4"  "Amotl2" "Smpdl3a"       "Lrrc2"         "Dusp14" "Fam65a"
+## [6,] "Smg1"    "Eif5a"  "Zfp706"        "2310003F16Rik" "Srsf10" "Hdlbp"
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+We performed Enrichment Analysis on these important features extracted, the top annotations are reported below.
+
+Factors      |    Gene Ontologies
+
+-----------    ---------------------
+
+ factor 1    |    cell development, neuron projection guidance, stem cell differentiation, mesenchymal cell development, anatomical structure development
+
+ factor 2    |   bounding membrance organelle, protein C-terminus binding, lyosomal membrane
+
+ factor 3    |   nucleolus, nuclear lumen, ribosome assembly, nuclear part, RNA binding, nucleotide binding
+
+ factor 4    |   central nervous system development, cell surface receptor signaling, extracellular space
+
+ factor 5    |   carbon oxygen lyase activity, chromosomal region, regulatory region nucleic acid binding
+
+ factor 6    |   extracellular exosome, extracellular vesicle, extracellular organelle, vesicle
+
+ factor 7    |
+
+ factor 8    |  protein localization to cell periphery, plasma membrane organization
+
+ factor 9    |  sperm-egg recognition, cell-cell recognition, fertilization, regulation of cellular process, substrate-specific transporter activity
 
 
 
