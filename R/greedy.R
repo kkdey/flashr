@@ -36,13 +36,13 @@ flash.greedy = function(Y,K,flash_para = list(),
   # match the input parameter
   gvalue = match.arg(gvalue, c("lik","eigen"))
   # set the default value for flash
-  flash_default = list(tol=1e-5, maxiter_r1 = 500,
+  flash_default = list(tol=1e-3, maxiter_r1 = 20,
                        partype = "constant",
                        sigmae2_true = NA,
                        factor_value = NA,fix_factor = FALSE,
                        nonnegative = FALSE,
                        objtype = "margin_lik",
-                       ash_para = list(),
+                       ash_para = list(control=list(maxiter=20,trace=FALSE)),
                        fl_list = list())
   if(gvalue == "lik"){
     flash_default$objtype = "lowerbound_lik"

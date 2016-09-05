@@ -62,6 +62,8 @@ FactorGGStack <- function(loadings,
                           plot_labels = TRUE,
                           legend_labels = "",
                           scale=TRUE,
+                          lowlim=NULL,
+                          uplim=NULL,
                           axis_tick = list(axis_ticks_length = .1,
                                            axis_ticks_lwd_y = .1,
                                            axis_ticks_lwd_x = .1,
@@ -170,6 +172,13 @@ FactorGGStack <- function(loadings,
   df_mlt_2 <- df_mlt;
   df_mlt_2$value[df_mlt_2$value > 0] = 0;
   
+  if(is.null(lowlim)){
+  lowlim <- min(loadings) ;
+  }
+  if(is.null(uplim)){
+  uplim <- max(loadings);
+  }
+  
   # make ggplot
   a <- ggplot2::ggplot() +
       ggplot2::xlab(yaxis_label) + ggplot2::ylab("") +
@@ -189,6 +198,7 @@ FactorGGStack <- function(loadings,
     ggplot2::ggtitle(figure_title) +
     ggplot2::scale_x_discrete(breaks = as.character((levels(df_mlt$document)[round(label_breaks)])),
                               labels = names(label_breaks)) +
+    ggplot2::scale_y_continuous(limits = c(lowlim, uplim)) +
     # Add legend title
     ggplot2::labs(fill = "Factors") +
     ggplot2::coord_flip() +
