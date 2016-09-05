@@ -24,13 +24,12 @@ LinkingTo: Rcpp,
            RcppArmadillo
 Depends: Rcpp,
          RcppArmadillo,
-         ggplot2 (>= 2.1.0)
+         ggplot2 (>= 2.1.0),
 Imports: ashr,
     Rcpp (>= 0.12.5),
     irlba,
     tensr,
     RcppEigen,
-    CountClust,
     grid,
     gridExtra,
     ggplot2,
@@ -43,4 +42,5 @@ VignetteBuilder: knitr
 biocViews: RNASeq, GeneExpression, FactorAnalysis, Shrinkage, Software, Visualisation
 Suggests: knitr,
     testthat,
-    rmarkdown
+    rmarkdown,
+    CountClust
