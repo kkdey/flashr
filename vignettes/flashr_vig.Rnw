@@ -121,7 +121,7 @@ We apply FLASH on the data. We show here example of two versions of FLASH - the 
 ll_deng <- flash.greedy(voom_data, K=10, flash_para = list(tol=1e-3, maxiter_r1 = 50,
                 partype="known", sigmae2_true = voom_weights,
                 nonnegative=FALSE));
-ll_deng <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 50,
+ll_deng <- flashpool(voom_data, K=10, tol=1e-3, maxiter_r1 = 20,
                 partype="known", sigmae2_true = voom_weights);
 @ %def
 
