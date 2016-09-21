@@ -616,7 +616,7 @@ initial_value = function(Y, nonnegative = FALSE,
 #' @details flash privide rank one matrix decomposition with variational EM algorithm.
 #'
 #' @export flash
-#'
+#' @useDynLib flashr
 #' @importFrom ashr ash
 #'
 flash = function(Y, tol=1e-5, maxiter_r1 = 500,
@@ -766,7 +766,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
 #' @details flashpool provide repeated FLASH applications on residuals from a data matrix.
 #'
 #' @export flashpool
-#'
+#' @useDynLib flashr
 #' @importFrom ashr ash
 #'
 
