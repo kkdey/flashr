@@ -24,7 +24,7 @@ LinkingTo: Rcpp,
            RcppArmadillo
 Depends: R (>= 3.2)
 Imports: ashr,
-    Rcpp (>= 0.12.5),
+    Rcpp,
     irlba,
     tensr,
     RcppEigen,

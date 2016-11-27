@@ -816,3 +816,86 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
               c_lik_val = c_lik_val,
               obj_val_track = obj_val_track))
 }
+
+
+#' FLASH
+#'
+#' factor loading adaptive shrinkage (rank K or repeated rank 1 updates K times)
+#' @return list of factor, loading and variance of noise matrix
+#'  \itemize{
+#'   \item{\code{El}} {is a N x K matrix of factor loadings}
+#'   \item{\code{Ef}} {is a P x K matrix for factor distributions}
+#'   \item{\code{sigmae2}}{is a N by P matrix for estimated value for the variance structure}
+#'  }
+#' @param Y the data matrix
+#' @param tol is for the tolerence for convergence in iterations and ash
+#' @param maciter_r1 is maximum of the iteration times for rank one case
+#' @param sigmae2_true true value for the variance structure
+#' @param nonnegative if the facotor and loading are nonnegative or not.
+#' TRUE for nonnegative
+#' FALSE for no constraint
+#' @param partype parameter type for the variance,
+#' "constant" for constant variance,
+#' "var_col" for nonconstant variance for column,
+#' "known" for the kown variance,
+#' "Bayes_var" for Bayes version of the nonconstant variance for row and column
+#' "loganova" is anova estiamtion for the log residual square
+#' @param objtype  objective function type,
+#' "margin_lik" for conditional likelihood,
+#' "lowerbound_lik" for full objective function
+#' @param fix_factor whether the factor is fixed or not
+#' TRUE for fix_factor
+#' FALSE for non-constraint
+#' @param factor_value is the factor value if the factor is fixed
+#' @param ash_para is the parameters list for ash
+#' @param fl_list is a list containing all the informations from other factors ans loadings
+#' l is loadings, f is factors, l2 and f2 are corresponding second moments.
+#' priorpost_vec is expectation of log piropost ratio
+#' clik is conditional likelihood (marginal likelihood)
+#'
+#' @details flashpool provide repeated FLASH applications on residuals from a data matrix.
+#'
+#' @export flashpool
+#' @useDynLib flashr
+#' @importFrom ashr ash
+#' @export
+
+flashpool <- function(data,K,
+                      tol=1e-5, maxiter_r1 = 50,
+                      partype = c("constant","known","Bayes_var","var_col"),
+                      sigmae2_true = NA,
+                      factor_value = NA,fix_factor = FALSE,
+                      nonnegative = FALSE,
+                      objtype = c("margin_lik","lowerbound_lik"),
+                      ash_para = list(),
+                      fl_list=list())
+{
+  res <- data;
+  loadings <- numeric();
+  factors <- numeric();
+  for(k in 1:K){
+    suppressMessages(suppressWarnings(out1 <- flash(res,
+                                                    tol=tol,
+                                                    maxiter_r1=maxiter_r1,
+                                                    partype=partype,
+                                                    sigmae2_true = sigmae2_true,
+                                                    factor_value = factor_value,
+                                                    fix_factor = fix_factor,
+                                                    nonnegative = nonnegative,
+                                                    objtype = objtype,
+                                                    ash_para = ash_para,
+                                                    fl_list = fl_list)));
+
+    res <- res - out1$l%*%t(out1$f)
+    loadings <- cbind(loadings, out1$l);
+    factors  <- cbind(factors,  out1$f);
+    cat("We are at iteration", k, "\n")
+  }
+
+  ll <- list(l=loadings,
+             f=factors,
+             residuals=res)
+  return(ll)
+}
+
+
