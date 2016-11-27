@@ -38,7 +38,7 @@
 #' FLASH model
 #'
 #' @import ggplot2
-#' @import cowplot
+#' @importFrom cowplot ggdraw panel_border plot_grid
 #' @import plyr
 #' @import reshape2
 #' @export
