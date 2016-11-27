@@ -24,7 +24,7 @@ LinkingTo: Rcpp,
            RcppArmadillo
 Depends: Rcpp,
          RcppArmadillo,
-         ggplot2 (>= 2.1.0),
+         ggplot2,
 Imports: ashr,
     Rcpp (>= 0.12.5),
     irlba,
