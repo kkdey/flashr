@@ -58,7 +58,7 @@ ATM_r1 = function(Y, Ef, Ef2,
     betahat=as.vector(betahat)
   }
   # set ash default setting up
-  ash_default = list(betahat = betahat+0.001, sebeta = sebeta+0.0001,
+  ash_default = list(betahat = betahat, sebeta = sebeta,
                      method = "fdr", mixcompdist = "normal")
   # ATM update
   # decide the sign for output
@@ -71,11 +71,11 @@ ATM_r1 = function(Y, Ef, Ef2,
     ash_para = modifyList(ash_default,ash_para)
     ATM = do.call(ashr::ash,ash_para)
     # ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist,outputlevel=4)
-    Ef = ATM$PosteriorMean
-    SDf = ATM$PosteriorSD
+    Ef = ATM$result$PosteriorMean
+    SDf = ATM$result$PosteriorSD
     Ef2 = SDf^2 + Ef^2
-    mat_post = ATM$flash.data
-    fit_g = ATM$fitted.g
+    mat_post = ATM$flash_data
+    fit_g = ATM$fitted_g
     return(list(Ef = Ef,
                 Ef2 = Ef2,
                 mat = mat_post,
@@ -84,8 +84,8 @@ ATM_r1 = function(Y, Ef, Ef2,
     ash_para = modifyList(ash_default,ash_para)
     ATM = do.call(ashr::ash,ash_para)
     # ATM = ash(betahat, sebeta, method="fdr", mixcompdist=mixdist)
-    Ef = ATM$PosteriorMean
-    SDf = ATM$PosteriorSD
+    Ef = ATM$result$PosteriorMean
+    SDf = ATM$result$PosteriorSD
     Ef2 = SDf^2 + Ef^2
     return(list(Ef = Ef, Ef2 = Ef2))
   }
@@ -712,7 +712,7 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
   objtype = match.arg(objtype, c("margin_lik","lowerbound_lik"))
 
   # check the input
-  if( !is.na(sigmae2_true) & !(partype %in% c("known","noisy","noisy_col")) ){
+  if( any(!is.na(sigmae2_true)) & !(partype %in% c("known","noisy","noisy_col")) ){
     stop("You should choose partype = 'known' or 'noisy' ,'noisy_col',if you want to input the value of sigmae2_true")
   }
 
@@ -816,7 +816,6 @@ flash = function(Y, tol=1e-5, maxiter_r1 = 500,
               c_lik_val = c_lik_val,
               obj_val_track = obj_val_track))
 }
-
 
 #' FLASH
 #'
