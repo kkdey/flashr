@@ -1,14 +1,14 @@
 #' Factor Loadings Stacked Bar chart with ggplot2 package
 #'
 #' Make the Stacked bar chart representation of the factor
-#' loadings obtained from FLASH, PMD, SFA or any factor 
+#' loadings obtained from FLASH, PMD, SFA or any factor
 #' analysis software. The positive loadings are stacked on the positive Y-axis
 #' and the negative loadings are stacked on the negative Y-axis.
 #'
 #'
-#' @param loadings loadings for each sample obtained from a some factor analysis 
-#' method. Usually a sample by factors matrix in the FLASH or any factor 
-#' analysis model output. 
+#' @param loadings loadings for each sample obtained from a some factor analysis
+#' method. Usually a sample by factors matrix in the FLASH or any factor
+#' analysis model output.
 #' @param annotation A data.frame of two columns: sample_id and label.
 #' sample_id is the unique identifying number of each sample (alphanumeric).
 #' label is a factor of labels, with levels of the factor
@@ -19,7 +19,7 @@
 #' must be the same or greater than the number of clusters. The clusters not
 #' assigned a color are filled with white in the figure. In addition, the
 #' recommended choice of color palette here is RColorBrewer, for instance
-#' RColorBrewer::brewer.pal(8, "Accent") or 
+#' RColorBrewer::brewer.pal(8, "Accent") or
 #' RColorBrewwer::brewer.pal(9, "Set1").
 #' @param figure_title Title of the plot. Default is NULL
 #' @param yaxis_label Axis label for the samples.
@@ -31,26 +31,26 @@
 #' order.
 #' @param split_line Control parameters for line splitting the batches in the
 #' plot. User can control for line width and line color.
-#' @param plot_labels A logical parameter, if TRUE the function plots the axis 
+#' @param plot_labels A logical parameter, if TRUE the function plots the axis
 #' labels.
-#' @param legend_labels The labels of the legend. Defaults to NULL, which will report the 
+#' @param legend_labels The labels of the legend. Defaults to NULL, which will report the
 #' factor number only.
-#' @param scale If TRUE, each loading vector is scaled by the standard deviation 
-#' across samples in order to ensure all loadings are considered roughly at the 
-#' same scale. If FALSE, the original loadings obtained from the factor analysis 
+#' @param scale If TRUE, each loading vector is scaled by the standard deviation
+#' across samples in order to ensure all loadings are considered roughly at the
+#' same scale. If FALSE, the original loadings obtained from the factor analysis
 #' model output is used.
 #' @param axis_tick Control parameters for x-axis and y-axis tick sizes.
-#' 
-#' @return Plots the Stacked Bar chart visualization of values of the loadings 
+#'
+#' @return Plots the Stacked Bar chart visualization of values of the loadings
 #' from a factor analysis model.
 #'
 #' @import ggplot2
-#' @importFrom cowplot ggdraw panel_border switch_axis_position plot_grid  
+#' @importFrom cowplot ggdraw panel_border plot_grid
 #' @import plyr
 #' @import reshape2
 #' @export
 
-FactorGGStack <- function(loadings, 
+FactorGGStack <- function(loadings,
                           annotation,
                           palette = RColorBrewer::brewer.pal(9, "Accent"),
                           figure_title = "",
@@ -69,25 +69,25 @@ FactorGGStack <- function(loadings,
                                            axis_ticks_lwd_x = .1,
                                            axis_label_size = 3,
                                            axis_label_face = "bold") ) {
-  
+
   if(scale){
-    loadings <- apply(loadings,2,function(x) 
+    loadings <- apply(loadings,2,function(x)
     {
       if(sd(x)!=0) {return (x/sd(x))}
       else {return (x)};
     })
   }
-  
+
   # check if the number of colors is same as or more than the number of clusters
   if (dim(loadings)[2] > length(palette)) {
     stop("Color choices is smaller than the number of clusters!")
   }
-  
+
   # check if rownames of loadings are unique
   if(length(unique(rownames(loadings))) != NROW(loadings)) {
     stop("loadings rownames are not unique!")
   }
-  
+
   # check the annotation data.frame
   if (!is.data.frame(annotation))
     stop("annotation must be a data.frame")
@@ -97,12 +97,12 @@ FactorGGStack <- function(loadings,
   if ( length(unique(annotation$sample_id)) != NROW(loadings)) {
     stop("sample_id is not unique")
   }
-  
+
   df_ord <- do.call(rbind,
                     lapply(1:nlevels(annotation$label), function(ii) {
                       temp_label <- levels(annotation$label)[ii]
                       temp_df <- loadings[which(annotation$label == temp_label), ]
-                      
+
                       is_single_sample <-
                         ( length(temp_df) == nlevels(annotation$label)|
                             is.null(dim(temp_df)) )
@@ -112,10 +112,10 @@ FactorGGStack <- function(loadings,
                       } else {
                         each_sample_order <- apply(temp_df, 1, which.max)
                       }
-                      
+
                       # find the dominant cluster across samples
                       sample_order <- as.numeric(attr(table(each_sample_order), "name")[1])
-                      
+
                       if (order_sample == TRUE & !is_single_sample) {
                         # reorder the matrix
                         temp_df_ord <- temp_df[order(temp_df[ , sample_order],
@@ -125,29 +125,29 @@ FactorGGStack <- function(loadings,
                       }
                       temp_df_ord
                     }) )
-  
+
   df_mlt <- reshape2::melt(t(df_ord))
   df_mlt <- plyr::rename(df_mlt, replace = c("Var1" = "topic",
                                              "Var2" = "document"))
   df_mlt$document <- factor(df_mlt$document)
   df_mlt$topic <- factor(df_mlt$topic)
-  
+
   # set blank background
   ggplot2::theme_set(ggplot2::theme_bw(base_size = 12)) +
     ggplot2::theme_update( panel.grid.minor.x = ggplot2::element_blank(),
                            panel.grid.minor.y = ggplot2::element_blank(),
                            panel.grid.major.x = ggplot2::element_blank(),
                            panel.grid.major.y = ggplot2::element_blank() )
-  
+
   # inflat nubmers to avoid rounding errors
   value_ifl <- 1
   # number of ticks for the weight axis, including 0 and 1
   ticks_number <- 6
-  
+
   # set axis tick positions
   label_count <- table(droplevels(annotation$label))
   label_count_cumsum <- cumsum(table(droplevels(annotation$label)))
-  
+
   label_names <- levels(droplevels(annotation$label))
   label_breaks <- sapply(1:length(label_count), function(i) {
     if (i == 1) {
@@ -164,21 +164,21 @@ FactorGGStack <- function(loadings,
     }
   })
   names(label_breaks) <- label_names
-  
+
   df_mlt_1 <- df_mlt;
   df_mlt_1$value[df_mlt_1$value < 0] = 0;
-  
-  
+
+
   df_mlt_2 <- df_mlt;
   df_mlt_2$value[df_mlt_2$value > 0] = 0;
-  
+
   if(is.null(lowlim)){
   lowlim <- min(loadings) ;
   }
   if(is.null(uplim)){
   uplim <- max(loadings);
   }
-  
+
   # make ggplot
   a <- ggplot2::ggplot() +
       ggplot2::xlab(yaxis_label) + ggplot2::ylab("") +
@@ -204,18 +204,18 @@ FactorGGStack <- function(loadings,
     ggplot2::coord_flip() +
     geom_bar(data = df_mlt_1, ggplot2::aes(x = document, y = value*1, fill = factor(topic)), stat = "identity") +
     geom_bar(data = df_mlt_2, ggplot2::aes(x = document, y = value*1, fill = factor(topic)), stat = "identity")
-   
- 
+
+
   # width = 1: increase bar width and in turn remove space
   # between bars
- 
+
   # Add demarcation
   b <- a + ggplot2::geom_vline(
     xintercept = cumsum(table(droplevels(annotation$label)))[
       -length(table(droplevels(annotation$label)))] + .1,
     col = split_line$split_col,
     size = split_line$split_lwd)
-  
+
   if (!plot_labels) {
     b
   } else {

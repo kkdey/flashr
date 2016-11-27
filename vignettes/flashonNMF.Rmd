@@ -1,0 +1,375 @@
+---
+title: "FLASH on NMF"
+output: pdf_document
+---
+
+In this report, we just focus on the situation that the variance structure is known factors and loadings are all positive.
+
+```{r,echo=FALSE}
+source('~/HG/flashr/R/flash.R')
+source('~/HG/ash-sfa/Rcode/postmean/flash_simulation/positive/flashNMF.R')
+```
+
+\section{1. Model}
+The idea here is to use the NMF result as the initial values and apply Ash Type Maximization (ATM) to get "flash" on NMF.
+
+Model:
+\begin{eqnarray}
+Y = L F^T + E
+\end{eqnarray}
+where $L_{i,k} \geq 0$, $F_{k,j} \geq 0$, $E \sim N(0,\Sigma)$ and $\Sigma$ is known.
+
+There are two constraint in NMF:
+
+- K should be predefined
+- All the elements in Y should be nonnegative 
+
+We are not sure that flash_nmf can provide a reasonably good estimation K, but the original flash works in this situation. We can use the original flash to get K and then use NMF to get initial value for flash-nmf.
+
+\section{2. Simulation}
+
+This section is organized as following:
+
+- 2.1 signal noise ratio is larger (want to get similar reslut as NMF)
+- 2.2 data without noise (want to get similar reslut as NMF)
+- 2.3 signal noise ratio is small (want to get zero rank estimation)
+- 2.4 signal noise ratio is neutrual (want to get much better result than NMF)
+- 2.5 iteration performance
+- 2.6 rank estimation
+
+We set the true rank is K = 6 for all the simulated data, and L and F are all nonnegative and sparse.
+
+In this section all the red dots are for flash, blue dots are for NMF and green dots are for true strucrue.
+
+\subsection{signal noise ratio is larger}
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.5
+data = sim_data(N, P, SF, SL, signal = 3, a = rep(0.1,N), b = rep(0.1,P), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+```
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash,MSE_nmf)
+plot(seq(1,2),res_mse, main="RMSE",col = c("red","blue"),ylab = "rmse")
+  legend("bottomright",
+         cex = 0.6,
+         c("flash","nmf"),
+         pch=c(1,1),
+         col=c("red","blue"))
+plot(gnmf@fit@W[,3],gflash$l[,3],main="nmf vs flash loading")
+plot(gnmf@fit@H[3,],gflash$f[,3],main = "nmf vs flash factor")
+plot(svd(Y)$d,main= "eigen value of Y")
+```
+
+We can see that the result is what we want: flash is similar with NMF when the signal ratio is big.
+
+We use the true value of variance structure into flash which take some advantage.
+
+
+
+\subsection{data without noise}
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.1
+data = sim_data(N, P, SF, SL, signal = 1, a = rep(0,N), b = rep(0,P), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (matrix(0.001,ncol = P,nrow = N)), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+```
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash,MSE_nmf)
+plot(seq(1,2),res_mse, main="RMSE",col = c("red","blue"),ylab = "rmse")
+  legend("bottomright",
+         cex = 0.6,
+         c("flash","nmf"),
+         pch=c(1,1),
+         col=c("red","blue"))
+plot(gnmf@fit@W[,3],gflash$l[,3],main="nmf vs flash loading")
+plot(gnmf@fit@H[3,],gflash$f[,3],main = "nmf vs flash factor")
+plot(svd(Y)$d,main= "eigen value of Y")
+```
+
+We can see that the result is what we want: flash is similar with NMF when the signal ratio is big.
+
+We use the true value of variance structure into flash which take some advantage. Since flash is based on noisy model, we need the variance structure for the noise term, we use the 0.001 are the variance for each element of Y.
+
+
+\subsection{signal noise ratio is small}
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.5
+data = sim_data(N, P, SF, SL, signal = 0.2, a = rchisq(N,3),b = rchisq(P,1), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+dim(gflash$l)
+length(gflash$l)
+```
+
+We get a zero rank estimation as we want.
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash,MSE_nmf)
+plot(seq(1,2),res_mse, main="RMSE",col = c("red","blue"),ylab = "rmse")
+  legend("bottomright",
+         cex = 0.6,
+         c("flash","nmf"),
+         pch=c(1,1),
+         col=c("red","blue"))
+plot(svd(Y)$d,main= "eigen value of Y")
+plot(as.vector(Y), main = "data")
+plot(as.vector(Y), main = "fitted values")
+points(as.vector(gnmf@fit@W %*% gnmf@fit@H),col = "blue")
+points(as.vector(gflash$l %*% t(gflash$f)),col = "red")
+```
+
+From the result we can see that goals achieved.
+
+\subsection{signal noise ratio is neutral}
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.5
+data = sim_data(N, P, SF, SL, signal = 2, a = rchisq(N,3),b = rchisq(P,1), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+dim(gflash$l)
+```
+
+
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash,MSE_nmf)
+plot(seq(1,2),res_mse, main="RMSE",col = c("red","blue"),ylab = "rmse")
+  legend("bottomright",
+         cex = 0.6,
+         c("flash","nmf"),
+         pch=c(1,1),
+         col=c("red","blue"))
+plot(svd(Y)$d,main= "eigen value of Y")
+plot(gnmf@fit@W[,3],gflash$l[,3],main="nmf vs flash loading")
+plot(gnmf@fit@H[3,],gflash$f[,3],main = "nmf vs flash factor")
+```
+
+From the result we can see that flash works better and there are effects of shrinkage on the smaller value of NMF factors and loadings.
+
+\subsection{iteration performance}
+
+In the flash-nmf setting up, we use (tau - 1) times iteration and the more iteration we do the better result we should get.
+
+We continue use the previous simulated data to show this reulst.
+
+```{r,eval=TRUE,cache=TRUE}
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=2,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash_1 = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_flash_2 = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=4,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_flash_3 = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=5,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_flash_4 = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=6,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_flash_5 = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+```
+
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash_1,MSE_flash_2,MSE_flash_3,MSE_flash_4,MSE_flash_5)
+plot(seq(1,5),res_mse, main="RMSE vs iteration")
+plot(gnmf@fit@W[,3],gflash$l[,3],main="nmf vs flash loading")
+plot(gnmf@fit@H[3,],gflash$f[,3],main = "nmf vs flash factor")
+plot(as.vector(Y), main = "fitted values")
+points(as.vector(gnmf@fit@W %*% gnmf@fit@H),col = "blue")
+points(as.vector(gflash$l %*% t(gflash$f)),col = "red")
+```
+
+The results show that the more iteration we run, the better performance we can get. But the iterations take time.
+
+
+\subsection{rank for flash-nmf}
+
+We would like to check the rank of flash estimation, and we hope we could get a reasonable rank.
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.5
+data = sim_data(N, P, SF, SL, signal = 1, a = rchisq(N,3),b = rchisq(P,1), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+dim(gflash$l)
+```
+
+We just run two iteration of flash, so the rank doesn't decrease. I think the rank would get smaller if we run more iterations of flash.
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+res_mse = c(MSE_flash,MSE_nmf)
+plot(seq(1,2),res_mse, main="RMSE",col = c("red","blue"),ylab = "rmse")
+  legend("bottomright",
+         cex = 0.6,
+         c("flash","nmf"),
+         pch=c(1,1),
+         col=c("red","blue"))
+plot(svd(Y)$d,main= "eigen value of Y")
+plot(gnmf@fit@W[,3],gflash$l[,3],main="nmf vs flash loading")
+plot(gnmf@fit@H[3,],gflash$f[,3],main = "nmf vs flash factor")
+```
+
+We can observe that the factors and loadings are different between flash and NMF when the signal noise ratio is getting larger. There are more shrinkage on the loadings and factors.
+
+We keep making the signal smaller to see how the rank changes.
+
+```{r,eval=TRUE,cache=TRUE}
+set.seed(999)
+library(NMF)
+## try the simulated data
+N = 60
+P = 100
+SF = 0.5
+SL = 0.5
+data = sim_data(N, P, SF, SL, signal = 0.5, a = rchisq(N,3),b = rchisq(P,1), mu = 0,K = 6,positive = TRUE)
+Y = data$Y
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+initial_nmf_list = list(l = gnmf@fit@W, f = t(gnmf@fit@H),
+                        l2 = (gnmf@fit@W)^2, f2 = (t(gnmf@fit@H))^2,
+                        priorpost_vec = rep(1,6),clik_vec = rep(1,6))
+gflash = flash_nmf(Y,initial_list = initial_nmf_list, maxiter_bf=3,
+                   flash_para = list(partype = "know",sigmae2_true = (data$sig2_true), nonnegative = TRUE),
+                   gvalue = "eigen",parallel = FALSE)
+MSE_nmf = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+MSE_flash = sqrt(mean((gflash$l %*% t(gflash$f) - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+
+dim(gflash$l)
+```
+
+
+```{r,eval=TRUE,cache=TRUE}
+par(mfrow = c(2,2),tcl=-0.5, family="serif", mai=c(0.6,0.6,0.6,0.6))
+c(MSE_flash,MSE_nmf)
+plot(as.vector(Y), main = "fitted values")
+points(as.vector(gnmf@fit@W %*% gnmf@fit@H),col = "blue")
+points(as.vector(gflash$l %*% t(gflash$f)),col = "red")
+plot(svd(Y)$d,main= "eigen value of Y")
+plot(as.vector(Y), main = "fitted values vs truth")
+points(as.vector(gnmf@fit@W %*% gnmf@fit@H),col = "blue")
+points(as.vector(gflash$l %*% t(gflash$f)),col = "red")
+points(as.vector(data$L_true%*%t(data$F_true)),col = "green")
+gnmf = nmf(Y *(Y>0),rank = 6,method = "lee")
+MSE_nmf_6 = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+gnmf = nmf(Y *(Y>0),rank = 5,method = "lee")
+MSE_nmf_5 = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+gnmf = nmf(Y *(Y>0),rank = 4,method = "lee")
+MSE_nmf_4 = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+gnmf = nmf(Y *(Y>0),rank = 3,method = "lee")
+MSE_nmf_3 = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+gnmf = nmf(Y *(Y>0),rank = 2,method = "lee")
+MSE_nmf_2 = sqrt(mean((gnmf@fit@W %*% gnmf@fit@H - data$L_true%*%t(data$F_true) )^2))/sqrt(mean((data$L_true%*%t(data$F_true))^2))
+rmse_nmf = c(MSE_nmf_2,MSE_nmf_3,MSE_nmf_4,MSE_nmf_5,MSE_nmf_6)
+plot(seq(2,6),rmse_nmf,main = "nmf RMSE vs rank")
+```
+
+In this case, we can see that flash does provide smaller rank than the input, and NMF also get better performance in the smaller rank which is still not as good as flash. 
+
+\section{Conclusioin}
+
+- Based on the assumption that the variance structure is known and the data follows normal distribution, we can improve the result of NMF by flash in almost all the situations.
+- What's more, the more iteration we run for flash, the better performance we would get.
+- A noisy version of NMF is achieved by flash by using ATM on NMF as initial values.
+
+
+
+

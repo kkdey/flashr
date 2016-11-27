@@ -1,12 +1,12 @@
 #' Factor Loadings (in FLASH) Multi-panel grid Bar chart  with ggplot2 package
 #'
 #' Make the multi-panel bar chart plot of loadings from a factor analysis model
-#' output, for e.g. - FLASH, SFA, PMD etc. 
-#' 
+#' output, for e.g. - FLASH, SFA, PMD etc.
 #'
-#' @param loadings loadings matrix generated from a factor analysis model. 
-#' Usually a sample by factors matrix in the FLASH or any factor analysis model 
-#' output. 
+#'
+#' @param loadings loadings matrix generated from a factor analysis model.
+#' Usually a sample by factors matrix in the FLASH or any factor analysis model
+#' output.
 #' @param annotation A data.frame of two columns: sample_id and label.
 #' sample_id is the unique identifying number of each sample (alphanumeric).
 #' label is a factor of labels, with levels of the factor
@@ -18,7 +18,7 @@
 #' assigned a color are filled with white in the figure. In addition, the
 #' recommended choice of color palette here is RColorBrewer, for instance
 #' RColorBrewer::brewer.pal(8, "Accent") or RColorBrewwer::brewer.pal(9, "Set1").
-#' @param figure_title Title of the plot. Defaults to NULL. 
+#' @param figure_title Title of the plot. Defaults to NULL.
 #' @param yaxis_label Axis label for the samples.
 #' @param order_sample if TRUE, we order samples in each annotation batch
 #' sorted by membership of most representative cluster. If FALSE, we keep
@@ -30,23 +30,23 @@
 #' bar chart.
 #' @param axis_tick Control parameters for x-axis and y-axis tick sizes.
 #' @param fcator_labels The labels of the factors. Deafults to a sequence from 1
-#' to the number of loadings. But user may control the factor_labels depending 
+#' to the number of loadings. But user may control the factor_labels depending
 #' on which loadings he is plotting in the panel.
-#' @param  
+#' @param
 #'
-#' @return Plots the Structure plot visualization of the absolute values of loadings of 
+#' @return Plots the Structure plot visualization of the absolute values of loadings of
 #' FLASH model
 #'
 #' @import ggplot2
-#' @importFrom cowplot ggdraw panel_border switch_axis_position plot_grid
+#' @importFrom cowplot ggdraw panel_border plot_grid
 #' @import plyr
 #' @import reshape2
 #' @export
 
 FactorGGBar <- function(loadings, annotation,
-                         palette = list("mid"="white", 
-                                        "low"="red", 
-                                        "high"="blue", 
+                         palette = list("mid"="white",
+                                        "low"="red",
+                                        "high"="blue",
                                         "midpoint"=0),
                          figure_title = "",
                          yaxis_label = "Label type",
@@ -64,40 +64,40 @@ FactorGGBar <- function(loadings, annotation,
                                    panel_title="",
                                    panel_title_fontsize=10,
                                    panel_title_font=3)) {
-  
+
   if(scale){
-    loadings <- apply(loadings,2,function(x) 
+    loadings <- apply(loadings,2,function(x)
                                   {
                                       if(sd(x)!=0) {return (x/sd(x))}
                                       else {return (x)}
     })
   }
-  
+
   if(is.null(factor_labels)){
     factor_labels <- 1:dim(loadings)[2];
   }
-  
+
   if(is.null(legend_labels)){
     legend_labels <- rep("", dim(loadings)[2]);
   }
-  
+
   # check if the number of colors is same as or more than the number of clusters
-  
+
   # check if rownames of loadings are unique
   if(length(unique(rownames(loadings))) != NROW(loadings)) {
     stop("loadings rownames are not unique!")
   }
-  
+
   ## check if legend labels size matches with loadings
-  
+
   if(length(legend_labels) != dim(loadings)[2]){
     stop("number of loadings do not match with number of legend labels")
   }
-  
+
   if(length(factor_labels) != dim(loadings)[2]){
     stop("number of factors do not match with number of factor labels")
   }
-  
+
   # check the annotation data.frame
   if (!is.data.frame(annotation))
     stop("annotation must be a data.frame")
@@ -107,10 +107,10 @@ FactorGGBar <- function(loadings, annotation,
   if ( length(unique(annotation$sample_id)) != NROW(loadings)) {
     stop("sample_id is not unique")
   }
-  
+
   label_count <- table(droplevels(annotation$label))
   label_count_cumsum <- cumsum(table(droplevels(annotation$label)))
-  
+
   label_names <- levels(droplevels(annotation$label))
   label_breaks <- sapply(1:length(label_count), function(i) {
     if (i == 1) {
@@ -127,19 +127,19 @@ FactorGGBar <- function(loadings, annotation,
     }
   })
   names(label_breaks) <- label_names
-  
+
   graphList <- vector(mode="list");
   ncols <- dim(loadings)[2]
-  
+
   for(n in 1:ncols){
     df_ord <- loadings[,n];
     df_mlt <- reshape2::melt(t(df_ord))
     df_mlt <- plyr::rename(df_mlt, replace = c("Var1" = "topic",
                                                "Var2"="document"))
-    
+
     df_mlt$document <- factor(df_mlt$document)
     df_mlt$topic <- factor(df_mlt$topic)
-    
+
     suppressMessages(graphList[[n]] <- ggplot2::ggplot(df_mlt,
                                       ggplot2::aes(x = document,
                                                    y = value,
@@ -159,25 +159,25 @@ FactorGGBar <- function(loadings, annotation,
       # Add label axis labels
       ggplot2::scale_x_discrete(breaks = as.character((levels(df_mlt$document)[round(label_breaks)])),
                                 labels = names(label_breaks))  + geom_bar(stat = "identity",position = "stack",width = 1) + #make the bars
-      coord_flip() + #flip the axes so the test names can be horizontal  
+      coord_flip() + #flip the axes so the test names can be horizontal
       #define the fill color gradient: blue=positive, red=negative
-      scale_fill_gradient2(name = "Loading", 
-                           high = palette$high, mid = palette$mid, low = palette$low, 
-                           midpoint=palette$midpoint, guide=F) + 
+      scale_fill_gradient2(name = "Loading",
+                           high = palette$high, mid = palette$mid, low = palette$low,
+                           midpoint=palette$midpoint, guide=F) +
       ggplot2::geom_vline(xintercept = cumsum(table(droplevels(annotation$label)))[
         -length(table(droplevels(annotation$label)))] + .1, col = split_line$split_col, size = split_line$split_lwd))
   }
-  
+
   panel$panel_cols <- ceiling(length(graphList)/panel$panel_rows)
   library(gridExtra)
   library(grid)
-  suppressWarnings(do.call("grid.arrange", 
+  suppressWarnings(do.call("grid.arrange",
           args = list(grobs=graphList,
                       ncol = panel$panel_cols,
                       nrow = panel$panel_rows,
                       top=textGrob(paste0(panel$panel_title),
                                    gp=gpar(fontsize=panel$panel_title_fontsize,
                                            font=panel$panel_title_font)))));
-         
+
 }
 
